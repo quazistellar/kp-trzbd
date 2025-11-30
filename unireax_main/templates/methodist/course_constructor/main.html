@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Конструктор курса - {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<section class="methodist-main">
+    <div class="methodist-container">
+        <div class="methodist-header">
+            <div>
+                <h1 class="methodist-title">Конструктор курса</h1>
+                <p class="methodist-subtitle">{{ course.course_name }}</p>
+            </div>
+            <div class="methodist-course-actions">
+               {% if request.user.role.role_name == 'методист' %}
+                <a href="{% url 'methodist_dashboard' %}" class="methodist-btn methodist-btn-secondary">
+                    <span class="methodist-icon methodist-icon-back"></span>
+                    Дашборд
+                </a>
+                {% endif %}
+                <a href="{% url 'methodist_dashboard' %}" class="methodist-btn methodist-btn-secondary">
+                    <span class="methodist-icon methodist-icon-courses"></span>
+                    Все курсы
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="methodist-messages">
+            {% for message in messages %}
+            <div class="methodist-message {% if message.tags %}methodist-message-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="methodist-dashboard-stats">
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-book"></i>
+                    <span class="methodist-icon methodist-icon-lectures"></span>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ lectures.count }}</div>
+                    <div class="methodist-stat-label">Лекций</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                      <i class="fas fa-file-alt"></i>
+                    <span class="methodist-icon methodist-icon-tests"></span>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ tests.count }}</div>
+                    <div class="methodist-stat-label">Тестов</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-briefcase"></i>
+                    <span class="methodist-icon methodist-icon-assignments"></span>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ practical_assignments.count }}</div>
+                    <div class="methodist-stat-label">Практических заданий</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                  <i class="fas fa-question"></i>
+                  <span class="methodist-icon methodist-icon-stats"></span>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ total_questions }}</div>
+                    <div class="methodist-stat-label">Вопросов в тестах</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="methodist-card">
+            <h2 class="methodist-text-view">Управление материалами</h2>
+            <div class="methodist-quick-actions">
+                <a href="{% url 'methodist_lecture_management' course.id %}" class="methodist-action-card">
+                    <div class="methodist-action-content">
+                        <h3>Управление лекциями</h3>
+                        <p>Добавление и редактирование лекций</p>
+                    </div>
+                </a>
+                <a href="{% url 'methodist_test_constructor' course.id %}" class="methodist-action-card">
+                    <div class="methodist-action-content">
+                        <h3>Конструктор тестов</h3>
+                        <p>Создание и редактирование тестов</p>
+                    </div>
+                </a>
+                <a href="{% url 'methodist_assignment_management' course.id %}" class="methodist-action-card">
+                    <div class="methodist-action-content">
+                        <h3>Практические задания</h3>
+                        <p>Создание и редактирование практических заданий</p>
+                    </div>
+                </a>
+              {% if request.user.role.role_name == 'методист' %}
+                <a href="{% url 'methodist_course_settings' course.id %}" class="methodist-action-card">
+                    <div class="methodist-action-content">
+                        <h3>Настройки курса</h3>
+                        <p>Основные настройки и параметры</p>
+                    </div>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="methodist-card">
+            <div class="methodist-section-header">
+                <h3 class="methodist-text-view">Лекции курса</h3>
+                <a href="{% url 'methodist_lecture_management' course.id %}" class="methodist-section-link">
+                    Управление <span class="methodist-icon methodist-icon-view"></span>
+                </a>
+            </div>
+            {% if lectures %}
+            <div class="methodist-materials-grid">
+                {% for lecture in lectures %}
+                <div class="methodist-course-card">
+                    <div class="methodist-course-header">
+                        <h4>{{ lecture.lecture_name }}</h4>
+                        <span class="methodist-badge methodist-badge-primary">#{{ lecture.lecture_order }}</span>
+                    </div>
+                    <div class="methodist-course-info">
+                        <p class="methodist-course-description">{{ lecture.lecture_content|truncatewords:20 }}</p>
+                    </div>
+                    <div class="methodist-course-meta">
+                        <span>Тестов: {{ lecture.test_set.count }}</span>
+                        <span>Заданий: {{ lecture.practicalassignment_set.count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="methodist-empty-state">
+                <span class="methodist-empty-icon methodist-icon methodist-icon-lectures"></span>
+                <p>Лекции еще не добавлены</p>
+                <a href="{% url 'methodist_lecture_management' course.id %}" class="methodist-btn methodist-btn-primary">
+                    Добавить первую лекцию
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="methodist-card">
+            <div class="methodist-section-header">
+                <h3 class="methodist-text-view">Тесты курса</h3>
+                <a href="{% url 'methodist_test_constructor' course.id %}" class="methodist-section-link">
+                    Конструктор <span class="methodist-icon methodist-icon-view"></span>
+                </a>
+            </div>
+            {% if tests %}
+            <div class="methodist-materials-grid">
+                {% for test in tests %}
+                <div class="methodist-course-card">
+                    <div class="methodist-course-header">
+                        <h4>{{ test.test_name }}</h4>
+                        <div class="methodist-course-actions">
+                            {% if test.is_final %}
+                            <span class="methodist-badge methodist-badge-danger">Финальный</span>
+                            {% endif %}
+                            <span class="methodist-badge methodist-badge-primary">{{ test.get_grading_form_display }}</span>
+                        </div>
+                    </div>
+                    <div class="methodist-course-meta">
+                        <span>Лекция: {{ test.lecture.lecture_name }}</span>
+                        <span>Вопросов: {{ test.question_set.count }}</span>
+                        {% if test.max_attempts %}
+                        <span>Попыток: {{ test.max_attempts }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="methodist-course-actions">
+                        <a href="{% url 'methodist_test_editor' course.id test.id %}" class="methodist-btn methodist-btn-outline">
+                            Редактировать
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="methodist-empty-state">
+                <span class="methodist-empty-icon methodist-icon methodist-icon-tests"></span>
+                <p>Тесты еще не созданы</p>
+                <a href="{% url 'methodist_test_constructor' course.id %}" class="methodist-btn methodist-btn-primary">
+                    Создать первый тест
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="methodist-card">
+            <div class="methodist-section-header">
+                <h3 class="methodist-text-view">Практические задания</h3>
+                <a href="{% url 'methodist_assignment_management' course.id %}" class="methodist-section-link">
+                    Управление <span class="methodist-icon methodist-icon-view"></span>
+                </a>
+            </div>
+            {% if practical_assignments %}
+            <div class="methodist-materials-grid">
+                {% for assignment in practical_assignments %}
+                <div class="methodist-course-card">
+                    <div class="methodist-course-header">
+                        <h4>{{ assignment.practical_assignment_name }}</h4>
+                        <span class="methodist-badge {% if assignment.assignment_deadline < today %}methodist-badge-danger{% else %}methodist-badge-warning{% endif %}">
+                            До: {{ assignment.assignment_deadline }}
+                        </span>
+                    </div>
+                    <div class="methodist-course-info">
+                        <p class="methodist-course-description">{{ assignment.practical_assignment_description|truncatewords:15 }}</p>
+                    </div>
+                    <div class="methodist-course-meta">
+                        <span>Лекция: {{ assignment.lecture.lecture_name }}</span>
+                        <span>Тип: {{ assignment.get_grading_type_display }}</span>
+                        {% if assignment.max_score %}
+                        <span>Макс. балл: {{ assignment.max_score }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="methodist-empty-state">
+                <span class="methodist-empty-icon methodist-icon methodist-icon-assignments"></span>
+                <p>Практические задания еще не добавлены</p>
+                <a href="{% url 'methodist_assignment_management' course.id %}" class="methodist-btn methodist-btn-primary">
+                    Добавить задание
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

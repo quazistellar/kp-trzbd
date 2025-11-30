@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Настройки курса - {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<section class="methodist-settings-panel">
+    <div class="methodist-settings-container">
+        <div class="methodist-settings-header">
+            <div class="methodist-settings-header-content">
+                <h1 class="methodist-settings-title">Настройки курса</h1>
+                <p class="methodist-settings-subtitle">Управление параметрами курса "{{ course.course_name }}"</p>
+            </div>
+            <div class="methodist-settings-header-actions">
+                <a href="{% url 'methodist_course_constructor' course.id %}" class="methodist-btn methodist-btn-back">
+                    ← Назад к конструктору
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="methodist-settings-messages">
+            {% for message in messages %}
+            <div class="methodist-settings-message methodist-settings-message-{{ message.tags }}">
+                <span class="methodist-settings-message-icon">
+                    {% if message.tags == 'success' %}✓
+                    {% elif message.tags == 'error' %}⚠
+                    {% elif message.tags == 'warning' %}ℹ
+                    {% else %}{% endif %}
+                </span>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="methodist-settings-layout">
+            <div class="methodist-settings-main">
+                <div class="methodist-settings-section">
+                    <div class="methodist-settings-card">
+                        <div class="methodist-settings-section-header">
+                            <h3 class="methodist-settings-section-title">Основные настройки</h3>
+                            <div class="methodist-settings-section-divider"></div>
+                        </div>
+                        
+                        <form method="post" class="methodist-settings-form" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="methodist-settings-form-grid">
+                                <div class="methodist-settings-form-field">
+                                    <label class="methodist-settings-form-label">
+                                        {{ form.course_hours.label }}
+                                        <span class="methodist-settings-required-mark">*</span>
+                                    </label>
+                                    {{ form.course_hours }}
+                                    {% if form.course_hours.errors %}
+                                        <div class="methodist-settings-error">{{ form.course_hours.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="methodist-settings-form-field">
+                                    <label class="methodist-settings-form-label">
+                                        {{ form.course_max_places.label }}
+                                    </label>
+                                    {{ form.course_max_places }}
+                                    <div class="methodist-settings-field-hint">Оставьте пустым для неограниченного количества</div>
+                                </div>
+                            </div>
+
+                            <div class="methodist-settings-form-grid">
+                                <div class="methodist-settings-form-field">
+                                    <label class="methodist-settings-form-label">
+                                        {{ form.course_price.label }}
+                                    </label>
+                                    {{ form.course_price }}
+                                    <div class="methodist-settings-field-hint">0 или пусто — бесплатно</div>
+                                </div>
+
+                                <div class="methodist-settings-form-field">
+                                    <label class="methodist-settings-form-label">
+                                        {{ form.code_room.label }}
+                                    </label>
+                                    {{ form.code_room }}
+                                    <div class="methodist-settings-field-hint">Код доступа для присоединения к курсу</div>
+                                </div>
+                            </div>
+
+                            <div class="methodist-settings-form-field">
+                                <label class="methodist-settings-form-label">
+                                    {{ form.course_photo_path.label }}
+                                </label>
+                                <div class="methodist-settings-file-upload">
+                                    {{ form.course_photo_path }}
+                                    <label for="{{ form.course_photo_path.id_for_label }}" class="methodist-settings-file-label">
+                                        <span class="methodist-settings-file-text">Выберите изображение</span>
+                                        <span class="methodist-settings-file-hint">JPG, PNG до 5MB</span>
+                                    </label>
+                                </div>
+                                {% if course.course_photo_path %}
+                                <div class="methodist-settings-current-photo">
+                                    <img src="{{ course.course_photo_path.url }}" alt="Текущее фото курса">
+                                    <p class="methodist-settings-photo-caption">Текущее фото</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="methodist-settings-checkboxes">
+                                <label class="methodist-settings-checkbox-label">
+                                    {{ form.has_certificate }}
+                                    <span class="methodist-settings-checkbox-custom"></span>
+                                    {{ form.has_certificate.label }}
+                                </label>
+
+                                <label class="methodist-settings-checkbox-label">
+                                    {{ form.is_active }}
+                                    <span class="methodist-settings-checkbox-custom"></span>
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+
+                            <div class="methodist-settings-form-actions">
+                                <button type="submit" class="methodist-btn methodist-btn-primary methodist-btn-large" name="action" value="update_settings">
+                                    Сохранить настройки
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="methodist-settings-sidebar">
+                <div class="methodist-settings-sidebar-card">
+                    <h4 class="methodist-settings-sidebar-title">Информация о курсе</h4>
+                    <div class="methodist-settings-details">
+                        <div class="methodist-settings-detail-item">
+                            <strong>Название:</strong> <span>{{ course.course_name }}</span>
+                        </div>
+                        <div class="methodist-settings-detail-item">
+                            <strong>Категория:</strong> <span>{{ course.course_category.course_category_name }}</span>
+                        </div>
+                        <div class="methodist-settings-detail-item">
+                            <strong>Тип курса:</strong> <span>{{ course.course_type.course_type_name }}</span>
+                        </div>
+                        <div class="methodist-settings-detail-item">
+                            <strong>Статус:</strong>
+                            <span class="methodist-settings-status {% if course.is_active %}methodist-settings-status-active{% else %}methodist-settings-status-inactive{% endif %}">
+                                {% if course.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </div>
+                        <div class="methodist-settings-detail-item">
+                            <strong>Создан:</strong>
+                            <span>{% if course.created_by %}{{ course.created_by.get_full_name }}{% else %}Не указан{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="methodist-settings-sidebar-card">
+                    <h4 class="methodist-settings-sidebar-title">Статистика курса</h4>
+                    <div class="methodist-settings-stats-grid">
+                        <div class="methodist-settings-stat-item">
+                            <div class="methodist-settings-stat-value">{{ total_lectures }}</div>
+                            <div class="methodist-settings-stat-label">Лекций</div>
+                        </div>
+                        <div class="methodist-settings-stat-item">
+                            <div class="methodist-settings-stat-value">{{ total_tests }}</div>
+                            <div class="methodist-settings-stat-label">Тестов</div>
+                        </div>
+                        <div class="methodist-settings-stat-item">
+                            <div class="methodist-settings-stat-value">{{ total_assignments }}</div>
+                            <div class="methodist-settings-stat-label">Заданий</div>
+                        </div>
+                        <div class="methodist-settings-stat-item">
+                            <div class="methodist-settings-stat-value">{{ total_students }}</div>
+                            <div class="methodist-settings-stat-label">Слушателей</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="methodist-settings-sidebar-card methodist-settings-danger-zone">
+                    <h4 class="methodist-settings-sidebar-title">Опасная зона</h4>
+                    <div class="methodist-settings-danger-actions">
+                        <form method="post" onsubmit="return confirm('Завершить курс? Он будет считаться до конца дополненным и слушатели будут уверены, что он больше не пополняется новыми материалами.')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="complete_course">
+                            <button type="submit" class="methodist-btn methodist-btn-danger">Отметить курс как завершенный</button>
+                        </form>
+                        {% if course.is_active %}
+                        <form method="post" onsubmit="return confirm('Архивировать курс? Доступ будет закрыт.')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="archive_course">
+                            <button type="submit" class="methodist-btn methodist-btn-danger">Архивировать курс</button>
+                        </form>
+                        {% endif %}
+                        {% if not course.is_active %}
+                         <form method="post" onsubmit="return confirm('Разархивировать курс? Доступ будет вновь открыт.')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="unarchive_course">
+                            <button type="submit" class="methodist-btn methodist-btn-success">Разархивировать курс</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+body {
+    background-color: #7B7FD5 !important;
+}
+
+.methodist-settings-panel {
+    padding: 30px 0;
+    min-height: 100vh;
+}
+
+.methodist-settings-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.methodist-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    gap: 30px;
+}
+
+.methodist-settings-header-content {
+    flex: 1;
+}
+
+.methodist-settings-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.5em;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+
+.methodist-settings-subtitle {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #BFC3F7;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.methodist-settings-header-actions {
+    flex-shrink: 0;
+}
+
+.methodist-btn-back {
+    background: rgba(123, 127, 213, 0.2);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    padding: 12px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-family: "Arial Black", sans-serif;
+    display: inline-block;
+}
+
+.methodist-btn-back:hover {
+    background: rgba(123, 127, 213, 0.3);
+    transform: translateX(-3px);
+}
+
+.methodist-settings-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+    align-items: start;
+}
+
+.methodist-settings-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.methodist-settings-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.methodist-settings-section-header {
+    margin-bottom: 25px;
+}
+
+.methodist-settings-section-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.4em;
+    color: #FFFFFF;
+    margin: 0 0 10px 0;
+}
+
+.methodist-settings-section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, #7B7FD5, transparent);
+    border-radius: 2px;
+}
+
+.methodist-settings-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.methodist-settings-form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.methodist-settings-form-label {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.methodist-settings-required-mark {
+    color: #ff4757;
+    font-size: 1.2em;
+}
+
+.methodist-settings-form-input,
+.methodist-settings-form-textarea,
+.methodist-settings-form-select {
+    background: rgba(191, 195, 247, 0.1);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    color: #FFFFFF;
+    outline: none;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.methodist-settings-form-select {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+}
+
+.methodist-settings-form-select option {
+    background: #FFFFFF;
+    color: #000000;
+    font-family: "Arial Black", sans-serif;
+    padding: 10px;
+}
+
+.methodist-settings-form-input:focus,
+.methodist-settings-form-textarea:focus,
+.methodist-settings-form-select:focus {
+    border-color: #A020F0;
+    box-shadow: 0 0 0 3px rgba(160, 32, 240, 0.1);
+}
+
+.methodist-settings-field-hint {
+    color: #BFC3F7;
+    font-size: 0.85em;
+    margin-top: 6px;
+    opacity: 0.7;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-error {
+    color: #ff4757;
+    font-size: 0.85em;
+    margin-top: 6px;
+    font-family: "Arial Black", sans-serif;
+}
+
+
+.methodist-settings-file-upload {
+    position: relative;
+}
+
+.methodist-settings-file-upload input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.methodist-settings-file-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    border: 2px dashed rgba(123, 127, 213, 0.4);
+    border-radius: 12px;
+    background: rgba(191, 195, 247, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.methodist-settings-file-label:hover {
+    border-color: #A020F0;
+    background: rgba(191, 195, 247, 0.1);
+}
+
+.methodist-settings-file-text {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 5px;
+}
+
+.methodist-settings-file-hint {
+    color: #BFC3F7;
+    font-size: 0.85em;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-current-photo {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.methodist-settings-current-photo img {
+    max-width: 150px;
+    border-radius: 10px;
+    border: 2px solid rgba(123, 127, 213, 0.4);
+}
+
+.methodist-settings-photo-caption {
+    color: #BFC3F7;
+    font-size: 0.9em;
+    margin-top: 8px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.methodist-settings-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(123, 127, 213, 0.6);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.methodist-settings-checkbox-label input:checked + .methodist-settings-checkbox-custom {
+    background: #A020F0;
+    border-color: #A020F0;
+}
+
+.methodist-settings-checkbox-label input:checked + .methodist-settings-checkbox-custom::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.methodist-settings-form-actions {
+    padding-top: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.methodist-btn {
+    font-family: "Arial Black", sans-serif !important;
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.methodist-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.methodist-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+.methodist-btn-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.methodist-btn-success {
+    background: linear-gradient(135deg, #06ad35ff, #027a2cff);
+    color: white;
+    border: 1px solid rgba(3, 96, 57, 0.3);
+}
+
+.methodist-btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+.methodist-btn-large {
+    padding: 16px 30px;
+    font-size: 1.1em;
+}
+
+.methodist-settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 20px;
+}
+
+.methodist-settings-sidebar-card {
+    background: rgba(21, 29, 73, 0.8);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.methodist-settings-sidebar-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.methodist-settings-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.methodist-settings-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-detail-item:last-child {
+    border-bottom: none;
+}
+
+.methodist-settings-detail-item strong {
+    color: #FFFFFF;
+    min-width: 80px;
+}
+
+.methodist-settings-detail-item span {
+    color: #BFC3F7;
+    text-align: right;
+    flex: 1;
+}
+
+.methodist-settings-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-status-active {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.methodist-settings-status-inactive {
+    background: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+    border: 1px solid #6c757d;
+}
+
+.methodist-settings-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.methodist-settings-stat-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(123, 127, 213, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.methodist-settings-stat-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.8em;
+    color: #FFFFFF;
+    margin-bottom: 5px;
+}
+
+.methodist-settings-stat-label {
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.85em;
+    color: #BFC3F7;
+}
+
+.methodist-settings-danger-zone {
+    border-color: rgba(220, 53, 69, 0.4) !important;
+    background: rgba(220, 53, 69, 0.1) !important;
+}
+
+.methodist-settings-danger-text {
+    color: #ffffffff;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-settings-danger-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.methodist-settings-messages {
+    margin-bottom: 25px;
+}
+
+.methodist-settings-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-family: "Arial Black", sans-serif;
+    border: 1px solid transparent;
+}
+
+.methodist-settings-message-success {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+    color: #d4edda;
+}
+
+.methodist-settings-message-error {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+    color: #f8d7da;
+}
+
+.methodist-settings-message-warning {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    color: #fff3cd;
+}
+
+.methodist-settings-message-icon {
+    font-size: 1.2em;
+}
+
+@media (max-width: 1024px) {
+    .methodist-settings-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .methodist-settings-sidebar {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .methodist-settings-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+    
+    .methodist-settings-title {
+        font-size: 2em;
+    }
+    
+    .methodist-settings-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .methodist-settings-card {
+        padding: 20px;
+    }
+    
+    .methodist-settings-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .methodist-settings-container {
+        padding: 0 15px;
+    }
+    
+    .methodist-settings-card {
+        padding: 15px;
+    }
+    
+    .methodist-settings-title {
+        font-size: 1.7em;
+    }
+    
+    .methodist-settings-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+body.dark-theme .methodist-settings-card,
+body.dark-theme .methodist-settings-sidebar-card {
+    background: rgba(26, 31, 46, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .methodist-settings-form-input,
+body.dark-theme .methodist-settings-form-textarea {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #e8eaf6;
+}
+
+body.dark-theme .methodist-settings-form-select {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+}
+
+body.dark-theme .methodist-settings-form-select option {
+    background: #FFFFFF;
+    color: #000000;
+}
+</style>
+{% endblock %}

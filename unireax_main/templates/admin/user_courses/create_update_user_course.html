@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+    {% if user_course_obj %}Редактирование записи на курс{% else %}Добавление слушателя на курс{% endif %}
+{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">{% if user_course_obj %}Редактирование записи на курс{% else %}Добавление слушателя на курс{% endif %}</h1>
+        
+        {% if messages %}
+        <div class="user-messages">
+            {% for message in messages %}
+            <div class="user-message {% if message.tags %}user-message-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="user-form-card">
+            <form method="post" class="user-form">
+                {% csrf_token %}
+                
+                {% if errors %}
+                <div class="user-form-error">
+                    {% for error in errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">Пользователь (слушатель) *</label>
+                        <select name="user" class="user-form-select" required>
+                            <option value="">Выберите пользователя</option>
+                            {% for listener in listeners %}
+                                <option value="{{ listener.id }}" 
+                                    {% if form.user.value %}
+                                        {% if form.user.value == listener.id %}selected{% endif %}
+                                    {% else %}
+                                        {% if user_course_obj and user_course_obj.user_id == listener.id %}selected{% endif %}
+                                    {% endif %}>
+                                    {{ listener.last_name }} {{ listener.first_name }} 
+                                    {% if listener.patronymic %}{{ listener.patronymic }}{% endif %}
+                                    ({{ listener.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="user-form-help-text">
+                            Только пользователи с ролью "слушатель курсов"
+                        </div>
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">Курс *</label>
+                        <select name="course" class="user-form-select" required>
+                            <option value="">Выберите курс</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}" 
+                                    {% if form.course.value %}
+                                        {% if form.course.value == course.id %}selected{% endif %}
+                                    {% else %}
+                                        {% if user_course_obj and user_course_obj.course_id == course.id %}selected{% endif %}
+                                    {% endif %}>
+                                    {{ course.course_name }} ({{ course.course_hours }}ч.)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">Дата регистрации</label>
+                        <input type="date" name="registration_date" 
+                               value="{% if form.registration_date.value %}{{ form.registration_date.value|date:'Y-m-d' }}{% elif user_course_obj and user_course_obj.registration_date %}{{ user_course_obj.registration_date|date:'Y-m-d' }}{% endif %}" 
+                               class="user-form-input">
+                        <div class="user-form-help-text">
+                            По умолчанию: сегодняшняя дата
+                        </div>
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">Цена курса (₽)</label>
+                        <input type="number" name="course_price" 
+                               value="{% if form.course_price.value %}{{ form.course_price.value }}{% elif user_course_obj and user_course_obj.course_price %}{{ user_course_obj.course_price }}{% endif %}" 
+                               class="user-form-input" step="0.01" min="0">
+                        <div class="user-form-help-text">
+                            Оставьте пустым для использования цены курса по умолчанию
+                        </div>
+                    </div>
+                </div>
+
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">Дата оплаты</label>
+                        <input type="date" name="payment_date" 
+                               value="{% if form.payment_date.value %}{{ form.payment_date.value|date:'Y-m-d' }}{% elif user_course_obj and user_course_obj.payment_date %}{{ user_course_obj.payment_date|date:'Y-m-d' }}{% endif %}" 
+                               class="user-form-input">
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">Дата завершения</label>
+                        <input type="date" name="completion_date" 
+                               value="{% if form.completion_date.value %}{{ form.completion_date.value|date:'Y-m-d' }}{% elif user_course_obj and user_course_obj.completion_date %}{{ user_course_obj.completion_date|date:'Y-m-d' }}{% endif %}" 
+                               class="user-form-input">
+                    </div>
+                </div>
+                
+                <div class="user-form-checkboxes">
+                    <label class="user-form-checkbox-label">
+                        <input type="checkbox" name="status_course" 
+                               {% if form.status_course.value or user_course_obj and user_course_obj.status_course %}checked{% endif %}>
+                        <span class="user-form-checkbox-custom"></span>
+                        Курс завершён
+                    </label>
+                    
+                    <label class="user-form-checkbox-label">
+                        <input type="checkbox" name="is_active" 
+                               {% if form.is_active.value or user_course_obj and user_course_obj.is_active or not user_course_obj %}checked{% endif %}>
+                        <span class="user-form-checkbox-custom"></span>
+                        Активная запись
+                    </label>
+                </div>
+
+                <div class="user-form-actions">
+                    <button type="submit" class="user-form-submit">
+                        {% if user_course_obj %}Обновить{% else %}Добавить{% endif %} запись
+                    </button>
+                    <a href="{% if user_course_obj %}{% url 'user_course_detail' user_course_obj.id %}{% else %}{% url 'user_course_list' %}{% endif %}" class="user-form-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}UNIREAX - Главная{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <section class="dream-banner">
+        <div>
+            <h1>Если у тебя есть мечта — сделай из неё план!</h1>
+            <p>Unireax — образовательные программы для тех, кто стремится к знаниям</p>
+            <p></p>
+            <br>
+            <a href="{% url 'catalog' %}" class="btn-dream" style="text-decoration: none;">Выбрать подходящий курс!</a>
+        </div>
+        <div>
+            <h2>Выбор наших слушателей</h2>
+            <hr class="divider">
+            <p>Курсы, которые набрали наибольшее количество звёзд:</p> 
+        </div>
+        <div class="background-elements">
+            <img class="moon-img" src="{% static 'icons/site_icon.png' %}" alt="Луна">
+            <img class="moon2-img" src="{% static 'images/moon.png' %}" alt="Луна">
+            <img class="rocket-img" src="{% static 'images/rocket.png' %}" alt="Ракета">
+        </div> 
+    </section>
+
+    <section class="courses-section">
+        <div class="courses-grid">
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="course-card">
+                        <div class="course-card-image-container">
+                            {% if course.course_photo_path %}
+                                <img src="{{ course.course_photo_path.url }}" alt="{{ course.course_name }}" class="course-image">
+                            {% else %}
+                                <img src="{% static 'images/course-placeholder.jpg' %}" alt="{{ course.course_name }}" class="course-image">
+                            {% endif %}
+
+                            <div class="course-overlay">
+                                <div class="course-card-header">
+                                    <h3 class="course-name">{{ course.course_name }}</h3>
+                                    {% if user.role.role_name == 'слушатель курсов' or user.role.role_name == 'преподаватель'%}
+                                    <button class="btn-favorite {% if course.is_favorite %}active{% endif %}" 
+                                            data-course-id="{{ course.id }}"
+                                            onclick="toggleCourseFavorite(this)"
+                                            aria-label="{% if course.is_favorite %}Удалить из избранного{% else %}Добавить в избранное{% endif %}">
+                                        <img src="{% static 'icons/icon-heart.png' %}" alt="Избранное" 
+                                             style="{% if course.is_favorite %}filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg);{% endif %}">
+                                    </button>
+                                    {% endif %}
+                                </div>
+
+                                <div class="course-description-container">
+                                    <p class="course-description" data-fulltext="{{ course.course_description|default:'' }}">
+                                        {{ course.course_description|default:'Описание отсутствует'|truncatechars:150 }}
+                                    </p>
+                                </div>
+
+                                <div class="course-details">
+                                    {% if course.course_price and course.course_price > 0 %}
+                                        <p class="price">{{ course.course_price|floatformat:0 }} ₽</p>
+                                    {% else %}
+                                        <p class="price">Бесплатный</p>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'course_enroll_detail' course.id %}" class="btn-details">Подробнее</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="course-card-footer">
+                            <div class="rating">
+                                <span>
+                                    {% if course.rating > 0 %}
+                                        {{ course.rating|floatformat:1 }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                    <img src="{% static 'icons/star.png' %}" alt="Рейтинг">
+                                </span>
+
+                                <span>
+                                    {% if course.course_max_places > 0 %}
+                                        {{ course.course_max_places }}
+                                    {% else %}
+                                        ∞
+                                    {% endif %}
+                                    <img src="{% static 'icons/listeners.png' %}" alt="Слушатели">
+                                </span>
+
+                                <span>{{ course.course_hours }} <img src="{% static 'icons/clock.png' %}" alt="Часы"></span>
+
+                                {% if course.has_certificate %}
+                                    <span> Сертификат <img src="{% static 'icons/cert.png' %}" alt="Сертификат"></span>
+                                {% endif %}
+                            </div>
+
+                            <p class="course-category">
+                                {{ course.course_category.course_category_name }},
+                                {{ course.course_type.course_type_name }}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+              <div class="course-card empty-card" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                <p>На данный момент таких курсов нет!</p>
+              </div>
+            {% endif %}
+        </div>
+    </section> 
+
+<section class="stats-section">
+    <div class="stats-title">
+        <h2>Статистика UNIREAX в цифрах</h2>
+        <hr class="divider">
+        <p>На нашей платформе в данный момент зарегистрировано:</p>
+    </div>
+    <div class="stats-content">
+        <div class="stats-item">
+            <div class="stats-value">
+                <span class="current-value" id="students-count">0</span>
+            </div>
+            <div class="stats-label">слушателей</div>
+        </div>
+        <div class="stats-item">
+            <div class="stats-value">
+                <span class="current-value" id="courses-count">0</span>
+            </div>
+            <div class="stats-label">курсов</div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+  
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-favorite').forEach(btn => {
+                const isActive = btn.classList.contains('active');
+                const img = btn.querySelector('img');
+                if (img) {
+                    if (isActive) {
+                        img.style.filter = 'brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg)';
+                    } else {
+                        img.style.filter = 'none';
+                    }
+                }
+            });
+
+            document.querySelectorAll('.btn-favorite').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const courseId = this.dataset.courseId;
+                    const isActive = this.classList.contains('active');
+                    
+                    if (window.toggleFavorite) {
+                        window.toggleFavorite(courseId).then(data => {
+                            if (data) {
+                                this.classList.toggle('active', data.is_favorite);
+                                
+                                this.setAttribute('aria-label', 
+                                    data.is_favorite ? 'Удалить из избранного' : 'Добавить в избранное');
+                                
+                                const img = this.querySelector('img');
+                                if (img) {
+                                    if (data.is_favorite) {
+                                        img.style.filter = 'brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg)';
+                                    } else {
+                                        img.style.filter = 'none';
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        window.toggleCourseFavorite = function(button) {
+            button.click();
+        };
+    </script>
+
+
+    <script src="{% static 'js/stars.js' %}" defer></script>
+    <script src="{% static 'js/search.js' %}" defer></script>
+    <script src="{% static 'js/stats-anim.js' %}" defer></script>
+    <script src="{% static 'js/truncate-description.js' %}" defer></script>
+{% endblock %}

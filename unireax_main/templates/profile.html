@@ -1,0 +1,1324 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Личный кабинет - UNIREAX
+{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+    <aside class="profile-sidebar">
+        <div class="user-card">
+            <div class="user-avatar-large">
+                <div class="avatar-text">{{ user.last_name|first|upper }}{{ user.first_name|first|upper }}</div>
+            </div>
+            <div class="user-info">
+                <h2 class="user-name">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="user-email">{{ user.email }}</p>
+                <div class="user-badge">
+                    {% if user.is_superuser %}
+                    <span class="badge badge-admin">Администратор</span>
+                    {% elif user.is_staff %}
+                    <span class="badge badge-staff">Персонал</span>
+                    {% elif user.role.role_name == 'методист' %}
+                    <span class="badge badge-metodist">Методист</span>
+                    {% elif user.role.role_name == 'преподаватель' %}
+                    <span class="badge badge-teacher">Преподаватель</span>
+                    {% elif user.role.role_name == 'слушатель курсов' %}
+                    <span class="badge badge-student">Слушатель курсов</span>
+                    {% else %}
+                    <span class="badge badge-user">Пользователь</span>
+                    {% endif %}
+                    
+                    {% if not user.is_verified %}
+                    <span class="badge badge-warning">Не подтвержден</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#overview" class="nav-item active" data-tab="overview">
+                <img src="{% static 'icons/observe.png' %}" alt="Обзор" class="nav-icon">
+                <span>Обзор</span>
+            </a>
+            
+            {% if not user.is_verified %}
+            <a href="#verification" class="nav-item" data-tab="verification">
+                <img src="{% static 'icons/approved.png' %}" alt="Подтверждение" class="nav-icon">
+                <span>Подтверждение</span>
+            </a>
+            {% endif %}
+            
+            <a href="#profile" class="nav-item" data-tab="profile">
+                <img src="{% static 'icons/user-profile.png' %}" alt="Профиль" class="nav-icon">
+                <span>Профиль</span>
+            </a>
+            
+            <a href="#security" class="nav-item" data-tab="security">
+                <img src="{% static 'icons/security.png' %}" alt="Безопасность" class="nav-icon">
+                <span>Безопасность</span>
+            </a>
+            
+            {% if user.is_superuser or user.is_staff %}
+            <a href="#analytics" class="nav-item" data-tab="analytics">
+                <img src="{% static 'icons/analytics.png' %}" alt="Аналитика" class="nav-icon">
+                <span>Аналитика</span>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'logout' %}" class="nav-item">
+                <img src="{% static 'icons/exit.png' %}" alt="Выйти" class="nav-icon">
+                <span>Выйти</span>
+            </a>
+
+            <div class="profile-form-card profile-danger-zone" style="background-color: #351118">
+            <h3 style="color: #dc3545;">Опасная зона</h3>
+            <p>Удаление аккаунта - необратимое действие. Все ваши данные будут безвозвратно удалены.</p>
+            
+            {% if not user.is_admin %}
+            <button type="button" class="profile-btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                Удалить аккаунт
+            </button>
+            {% else %}
+            <button type="button" class="profile-btn-danger" disabled title="Администраторы не могут удалять свои аккаунты">
+                Удалить аккаунт
+            </button>
+            <small style="color: #6c757d; display: block; margin-top: 8px;">
+                Администраторы не могут удалять свои аккаунты через интерфейс
+            </small>
+            {% endif %}
+            </div>
+        </nav>
+    </aside>
+
+    <main class="profile-main">
+        {% if not user.is_verified %}
+        <div class="verification-banner">
+            <div class="verification-content">
+                <div class="verification-icon">
+                    <img src="{% static 'icons/attention.png' %}" alt="Внимание">
+                </div>
+                <div class="verification-text">
+                    <h3>Ваш аккаунт ожидает подтверждения</h3>
+                    <p>
+                        {% if user.role.role_name == 'преподаватель' or user.role.role_name == 'методист' %}
+                        Ваши документы находятся на проверке. После подтверждения администратором вы получите полный доступ к функционалу платформы.
+                        {% else %}
+                        Ваш аккаунт находится на проверке. После подтверждения вы получите полный доступ к платформе.
+                        {% endif %}
+                    </p>
+                    <div class="verification-info">
+                        <small>
+                            <strong>Статус:</strong> Ожидает подтверждения 
+                            {% if user.role.role_name == 'преподаватель' or user.role.role_name == 'методист' %}
+                            • Проверка документов
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="verification-actions">
+                <button class="verification-contact-btn" onclick="showContactInfo()">
+                    Связаться с администрацией
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if messages %}
+        <div class="profile-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="tab-content active" id="overview-tab">
+            <div class="tab-header">
+                <h1>Обзор профиля</h1>
+                <p>Основная информация и активность</p>
+            </div>
+
+            <div class="profile-info-grid">
+                <div class="profile-info-card profile-card-1">
+                    <div class="profile-info-icon">
+                        <img src="{% static 'icons/email.png' %}" alt="Email" class="profile-info-icon-img">
+                    </div>
+                    <div class="profile-info-content">
+                        <label class="profile-info-label">Почта</label>
+                        <p class="profile-info-text">{{ user.email }}</p>
+                    </div>
+                </div>
+
+                <div class="profile-info-card profile-card-2">
+                    <div class="profile-info-icon">
+                        <img src="{% static 'icons/user-profile.png' %}" alt="Пользователь" class="profile-info-icon-img">
+                    </div>
+                    <div class="profile-info-content">
+                        <label class="profile-info-label">Имя пользователя</label>
+                        <p class="profile-info-text">{{ user.username }}</p>
+                    </div>
+                </div>
+
+                <div class="profile-info-card profile-card-3">
+                    <div class="profile-info-icon">
+                        <img src="{% static 'icons/date.png' %}" alt="Дата" class="profile-info-icon-img">
+                    </div>
+                    <div class="profile-info-content">
+                        <label class="profile-info-label">Дата регистрации</label>
+                        <p class="profile-info-text">{{ user.date_joined|date:"d.m.Y" }}</p>
+                    </div>
+                </div>
+
+                <div class="profile-info-card profile-card-4">
+                    <div class="profile-info-icon">
+                        <img src="{% static 'icons/status.png' %}" alt="Статус" class="profile-info-icon-img">
+                    </div>
+                    <div class="profile-info-content">
+                        <label class="profile-info-label">Статус</label>
+                        <p style="color: #04610cff;" class="{% if user.is_verified %}profile-status-active{% else %}profile-status-pending{% endif %}">
+                            {% if user.is_verified %}Активен{% else %}Ожидает подтверждения{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {% if not user.is_verified %}
+            <div class="verification-limitations">
+                <div class="limitations-header">
+                    <h3>Ограничения в режиме ожидания</h3>
+                    <p>До подтверждения вашего аккаунта некоторые функции недоступны:</p>
+                </div>
+                <div class="limitations-list">
+                    <div class="limitation-item">
+                        <span class="limitation-icon">❌</span>
+                        <span class="limitation-text">Запись на курсы</span>
+                    </div>
+                    <div class="limitation-item">
+                        <span class="limitation-icon">❌</span>
+                        <span class="limitation-text">Создание курсов (для методистов)</span>
+                    </div>
+                    <div class="limitation-item">
+                        <span class="limitation-icon">❌</span>
+                        <span class="limitation-text">Преподавание (для преподавателей)</span>
+                    </div>
+                    <div class="limitation-item">
+                        <span class="limitation-icon">❌</span>
+                        <span class="limitation-text">Доступ к материалам курсов</span>
+                    </div>
+                    <div class="limitation-item">
+                        <span class="limitation-icon">✅</span>
+                        <span class="limitation-text">Просмотр каталога курсов</span>
+                    </div>
+                    <div class="limitation-item">
+                        <span class="limitation-icon">✅</span>
+                        <span class="limitation-text">Редактирование профиля</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if user.is_superuser or user.is_staff %}
+            <div class="profile-dashboard-section">
+                <h2>Информационная панель администратора</h2>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-card profile-stat-primary">
+                        <div class="profile-stat-value">{{ stats.total_users }}</div>
+                        <div class="profile-stat-label">Всего пользователей</div>
+                    </div>
+                    <div class="profile-stat-card profile-stat-success">
+                        <div class="profile-stat-value">{{ stats.waiting_users }}</div>
+                        <div class="profile-stat-label">Пользователей, ожидающих подтверждения</div>
+                    </div>
+                    <div class="profile-stat-card profile-stat-warning">
+                        <div class="profile-stat-value">{{ stats.total_courses }}</div>
+                        <div class="profile-stat-label">Всего курсов</div>
+                    </div>
+                    <div class="profile-stat-card profile-stat-info">
+                        <div class="profile-stat-value">{{ stats.active_courses }}</div>
+                        <div class="profile-stat-label">Активных курсов</div>
+                    </div>
+                </div>
+            </div>
+
+            {% elif user.role.role_name == 'методист' and user.is_verified %}
+            <div class="profile-dashboard-section">
+                <div class="profile-section-header">
+                    <h2>Мои курсы</h2>
+                    <a href="{% url 'methodist_create_course' %}" class="profile-btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Создать курс
+                    </a>
+                </div>
+    
+                {% if metodist_courses %}
+                <div class="profile-courses-grid">
+                    {% for course in metodist_courses %}
+                    <div class="profile-course-card">
+                        <div class="profile-course-header">
+                            <h3>{{ course.course_name }}</h3>
+                            <span class="profile-course-status {% if course.is_active %}active{% else %}inactive{% endif %}">
+                                {% if course.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </div>
+                        <p class="profile-course-description">{{ course.course_description|truncatewords:15|default:"Описание отсутствует" }}</p>
+                        <div class="profile-course-stats">
+                            <div class="profile-course-stat">
+                                <span class="profile-course-number">{{ course.student_count }}</span>
+                                <span class="profile-course-label">Слушателей</span>
+                            </div>
+                            <div class="profile-course-stat">
+                                <span class="profile-course-number">{{ course.course_hours }}</span>
+                                <span class="profile-course-label">Часов</span>
+                            </div>
+                        </div>
+                        <div class="profile-course-actions">
+                            <a href="{% url 'methodist_course_settings' course.id %}" class="methodist-btn methodist-btn-outline">
+                                <i class="fas fa-cog"></i>
+                                Редактировать
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% else %}
+                <div class="profile-empty-state">
+                    <i class="fas fa-book-open profile-empty-icon"></i>
+                    <h3>Курсы не найдены</h3>
+                    <p>Создайте свой первый курс чтобы начать обучение</p>
+                    <a href="{% url 'methodist_create_course' %}" class="profile-btn-primary">Создать курс</a>
+                </div>
+                {% endif %}
+            </div>
+
+            {% elif user.role.role_name == 'преподаватель' and user.is_verified %}
+            <div class="profile-dashboard-section">
+                <h2>Мои курсы</h2>
+                
+                {% if teacher_courses %}
+                <div class="profile-courses-grid">
+                    {% for course in teacher_courses %}
+                    <div class="profile-course-card">
+                        <div class="profile-course-header">
+                            <h3>{{ course.course.course_name }}</h3>
+                            <span class="profile-course-status {% if course.is_active %}active{% else %}inactive{% endif %}">
+                                {% if course.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </div>
+                        <p class="profile-course-description">{{ course.course.course_description|truncatewords:15|default:"Описание отсутствует" }}</p>
+                        <div class="profile-course-stats">
+                            <div class="profile-course-stat">
+                                <span class="profile-course-number">{{ course.student_count }}</span>
+                                <span class="profile-course-label">Слушателей</span>
+                            </div>
+                            <div class="profile-course-stat">
+                                <span class="profile-course-number">{{ course.course.course_hours }}</span>
+                                <span class="profile-course-label">Часов</span>
+                            </div>
+                        </div>
+                        <div class="profile-course-actions">
+                            <a href="{% url 'course_teach' course.course.id %}" class="profile-btn-primary">Преподавать</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="profile-empty-state">
+                    <h3>Курсы не назначены</h3>
+                    <p>Вас еще не назначили преподавателем на курсы</p>
+                </div>
+                {% endif %}
+            </div>
+
+           {% elif user.role.role_name == 'слушатель курсов' and user.is_verified %}
+            <div class="profile-dashboard-section">
+                <h2>Мои курсы</h2>
+                
+                {% if student_courses %}
+                <div class="profile-courses-list">
+                    {% for course in student_courses %}
+                    <div class="profile-enrolled-course">
+                        <div class="profile-course-progress">
+                            <div class="profile-progress-circle" data-progress="{{ course.progress|default:0 }}">
+                                <span class="profile-progress-text">{{ course.progress|default:0|floatformat:0 }}%</span>
+                            </div>
+                        </div>
+                        <div class="profile-course-info">
+                            <h3>{{ course.course.course_name }}</h3>
+                            <p>{{ course.course.course_description|truncatewords:20|default:"Описание отсутствует" }}</p>
+                            <div class="profile-course-meta">
+                                <span>Записан: {{ course.registration_date|date:"d.m.Y" }}</span>
+                                <span>Часов: {{ course.course.course_hours }}</span>
+                                <span>Прогресс: {{ course.progress|default:0|floatformat:0 }}%</span>
+                            </div>
+                        </div>
+                        <div class="profile-course-action">
+                            <a href="{% url 'course_study' course.course.id %}" class="profile-btn-primary">
+                                Перейти к курсу
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="profile-empty-state">
+                    <h3>Вы пока не записаны на курсы</h3>
+                    <p>Найдите интересные предложения в нашем каталоге</p>
+                    <a href="{% url 'catalog' %}" class="profile-btn-primary">Найти курс!</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if not user.is_verified %}
+        <div class="tab-content" id="verification-tab">
+            <div class="tab-header">
+                <h1>Подтверждение аккаунта</h1>
+                <p>Исправьте данные и отправьте на повторную проверку</p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:center;">
+            <div class="verification-process">
+                <div class="verification-steps">
+                    <div class="verification-step active">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Проверка данных</h4>
+                            <p>Администратор проверяет ваши данные и документы</p>
+                        </div>
+                    </div>
+                    <div class="verification-step active">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Исправление замечаний</h4>
+                            <p>Внесите необходимые исправления по комментариям администратора</p>
+                        </div>
+                    </div>
+                    <div class="verification-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Подтверждение</h4>
+                            <p>Аккаунт активирован после успешной проверки</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="verification-actions-section">
+                    <div class="verification-action-card">
+                        <h3>Исправление данных</h3>
+                        <p>Если администратор указал на ошибки в ваших данных, вы можете их исправить:</p>
+                        <ul>
+                            <li>Перейдите во вкладку <strong>"Профиль"</strong> для изменения личных данных</li>
+                            <li>Используйте вкладку <strong>"Безопасность"</strong> для смены пароля</li>
+                            <li>После исправлений отправьте заявку на проверку заново и ожидайте результата</li>
+                        </ul>
+                    </div>
+
+                    <div class="verification-action-card">
+                        <h3>Документы для проверки</h3>
+                        <div class="documents-list">
+                            {% if user.role.role_name == 'преподаватель' or user.role.role_name == 'методист' %}
+                            <div class="document-item">
+                                <span class="document-name">Справка с места работы/документ об образовании</span>
+                                {% if user.certificat_from_the_place_of_work_path %}
+                                <span class="document-status uploaded">Загружена</span>
+                                <a href="{{ user.certificat_from_the_place_of_work_path.url }}" target="_blank" class="document-view">Просмотреть</a>
+                                {% else %}
+                                <span class="document-status missing">Отсутствует</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="document-item">
+                                <span class="document-name">Личные данные</span>
+                                <span class="document-status uploaded">Заполнены</span>
+                            </div>
+                            
+                            <div class="document-item">
+                                <span class="document-name">Контактная информация</span>
+                                <span class="document-status uploaded">Заполнена</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="tab-content" id="profile-tab">
+            <div class="tab-header">
+                <h1>Профиль</h1>
+                <p>Управление личной информацией</p>
+                
+                {% if not user.is_verified %}
+                <div class="verification-notice">
+                    <p>⚠️ После изменения данных ваш аккаунт будет отправлен на повторную проверку</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="profile-form-container">
+                <div class="profile-form-card">
+                    <h3>Личная информация</h3>
+                    <form method="post" class="profile-form" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="profile_update" value="true">
+                        
+                        <div class="profile-form-row">
+                            <div class="profile-form-group mb-3">
+                                <label for="first_name" class="profile-form-label">Имя *</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}"
+                                       placeholder="Введите ваше имя" class="form-control" required>
+                            </div>
+
+                            <div class="profile-form-group mb-3">
+                                <label for="last_name" class="profile-form-label">Фамилия *</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}"
+                                       placeholder="Введите вашу фамилию" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="patronymic" class="profile-form-label">Отчество</label>
+                            <input type="text" id="patronymic" name="patronymic" value="{{ user.patronymic|default:'' }}"
+                                   placeholder="Введите ваше отчество" class="form-control">
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="username" class="profile-form-label">Имя пользователя *</label>
+                            <input type="text" id="username" name="username" value="{{ user.username }}" required
+                                   placeholder="Введите имя пользователя" class="form-control">
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="email" class="profile-form-label">Email *</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}" required
+                                   placeholder="Введите ваш email" class="form-control">
+                        </div>
+
+                        {% if user.role.role_name == 'преподаватель' or user.role.role_name == 'методист' %}
+                        <div class="profile-form-group mb-3">
+                            <label for="position" class="profile-form-label">Должность *</label>
+                            <input type="text" id="position" name="position" value="{{ user.position }}" required
+                                   placeholder="Ваша должность по месту работы" class="form-control">
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="educational_institution" class="profile-form-label">Учебное заведение *</label>
+                            <input type="text" id="educational_institution" name="educational_institution" value="{{ user.educational_institution }}" required
+                                   placeholder="Название учебного заведения" class="form-control">
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="certificat_from_the_place_of_work_path" class="profile-form-label">
+                                Справка с места работы/документ об образовании
+                                {% if user.certificat_from_the_place_of_work_path %}
+                                (текущий файл: {{ user.certificat_from_the_place_of_work_path.name }})
+                                {% endif %}
+                            </label>
+                            <input type="file" id="certificat_from_the_place_of_work_path" name="certificat_from_the_place_of_work_path"
+                                   accept=".jpg,.jpeg,.png,.pdf" class="form-control">
+                            <small class="form-text">Форматы: JPG, PNG, PDF. Максимальный размер: 10 МБ</small>
+                        </div>
+                        {% endif %}
+
+                        <button type="submit" class="profile-btn-primary profile-btn-large" style="display: flex; flex-direction: column; align-items: center;"> 
+                            {% if not user.is_verified %}
+                            Обновить и отправить на проверку
+                            {% else %}
+                            Обновить профиль
+                            {% endif %}
+                        </button>
+
+                        {% if not user.is_verified %}
+                        <div class="update-notice">
+                            <p>После сохранения изменений ваш аккаунт будет отправлен на повторную проверку администратором.</p>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="security-tab">
+            <div class="tab-header">
+                <h1>Безопасность</h1>
+                <p>Управление паролем и настройками безопасности</p>
+            </div>
+
+            <div class="profile-form-container">
+                <div class="profile-form-card">
+                    <h3>Смена пароля</h3>
+                    <form method="post" class="profile-security-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="password_change" value="true">
+                        
+                        <div class="profile-form-group mb-3">
+                            <label for="old_password" class="profile-form-label">Текущий пароль</label>
+                            <input type="password" id="old_password" name="old_password" required 
+                                   placeholder="Введите текущий пароль" class="form-control">
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="new_password1" class="profile-form-label">Новый пароль</label>
+                            <input type="password" id="new_password1" name="new_password1" required 
+                                   placeholder="Введите новый пароль" class="form-control">
+                            <div class="profile-password-requirements">
+                                Ваш пароль должен содержать минимум 8 символов, включая хотя бы одну заглавную букву, 
+                                одну строчную, одну цифру и один специальный символ
+                            </div>
+                        </div>
+
+                        <div class="profile-form-group mb-3">
+                            <label for="new_password2" class="profile-form-label">Подтвердите новый пароль</label>
+                            <input type="password" id="new_password2" name="new_password2" required 
+                                   placeholder="Повторите новый пароль" class="form-control">
+                        </div>
+
+                        <button type="submit" class="profile-btn-primary profile-btn-large">Обновить пароль</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_superuser or user.is_staff %}
+        <div class="tab-content" id="analytics-tab">
+            <div class="tab-header">
+                <h1>Аналитика системы</h1>
+                <p>Статистика и основные метрики платформы UNIREAX</p>
+            </div>
+
+            <div class="profile-stats-grid">
+                <div class="profile-stat-card profile-stat-primary">
+                    <div class="profile-stat-value">{{ stats.total_users }}</div>
+                    <div class="profile-stat-label">Всего пользователей</div>
+                </div>
+                <div class="profile-stat-card profile-stat-success">
+                    <div class="profile-stat-value">{{ stats.active_users }}</div>
+                    <div class="profile-stat-label">Активных пользователей</div>
+                </div>
+                <div class="profile-stat-card profile-stat-warning">
+                    <div class="profile-stat-value">{{ analytics_data.total_enrollments }}</div>
+                    <div class="profile-stat-label">Всего записей на курсы</div>
+                </div>
+                <div class="profile-stat-card profile-stat-info">
+                    <div class="profile-stat-value">{{ analytics_data.completion_rate|floatformat:1 }}%</div>
+                    <div class="profile-stat-label">Процент завершенных курсов от общего числа</div>
+                </div>
+            </div>
+
+            <div class="profile-analytics-grid">
+                <div class="profile-analytics-card profile-chart-card">
+                    <h3>Активность пользователей за последние 30 дней</h3>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="profile-analytics-card profile-chart-card">
+                    <h3>Статистика курсов</h3>
+                    <div class="chart-container">
+                        <canvas id="coursesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="profile-analytics-card">
+                    <h3>Распределение пользователей по ролям</h3>
+                    <div class="profile-role-distribution">
+                        {% for role in role_distribution %}
+                        <div class="profile-role-item">
+                            <span class="profile-role-name">{{ role.name }}</span>
+                            <span class="profile-role-count">{{ role.count }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="profile-no-data">Нет данных о ролях</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="profile-analytics-card">
+                    <h3>Популярные курсы</h3>
+                    <div class="profile-popular-courses">
+                        {% for course in analytics_data.popular_courses %}
+                        <div class="profile-popular-course">
+                            <span class="profile-course-name">{{ course.course_name }}</span>
+                            <span class="profile-enrollment-count">{{ course.enrollment_count }} записей</span>
+                        </div>
+                        {% empty %}
+                        <p class="profile-no-data">Нет данных о курсах</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {{ analytics_data|json_script:"analytics-data-json" }}
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">Подтверждение удаления аккаунта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+           <div class="modal-body">
+    {% if user.role.role_name == 'слушатель курсов' %}
+    <p>При удалении вашего аккаунта будут удалены:</p>
+    <ul>
+        <li>Все ваши записи на курсы</li>
+        <li>Результаты тестов и практических заданий</li>
+        <li>Отзывы и оценки курсов</li>
+        <li>Прогресс обучения</li>
+        <li>Сертификаты (если есть)</li>
+    </ul>
+    <p class="text-warning"><strong>Это действие необратимо! Все ваши данные будут полностью удалены.</strong></p>
+    
+    {% elif user.role.role_name == 'преподаватель' %}
+    <p>При деактивации вашего аккаунта:</p>
+    <ul>
+        <li>Ваш аккаунт будет деактивирован (is_active=False)</li>
+        <li>Вы будете отключены от всех курсов, которые преподаете</li>
+        <li>Ваши отзывы и оценки останутся в системе</li>
+    </ul>
+    <p class="text-warning"><strong>Курсы, которые вы преподаете, останутся в системе, но будут без преподавателя.</strong></p>
+    
+    {% elif user.role.role_name == 'методист' %}
+    <p>При деактивации вашего аккаунта:</p>
+    <ul>
+        <li>Ваш аккаунт будет деактивирован (is_active=False)</li>
+        <li>Все созданные вами курсы будут деактивированы</li>
+        <li>Лекции и материалы курсов останутся в системе, но будут неактивны</li>
+        <li>Задания и тесты останутся, но будут неактивны</li>
+    </ul>
+    <p class="text-danger"><strong>Это действие затронет всех пользователей, записанных на ваши курсы! Курсы станут недоступны для обучения.</strong></p>
+    {% endif %}
+    
+    <p>Вы уверены, что хотите продолжить?</p>
+    
+    <form method="post" action="{% url 'delete_account' %}" id="deleteAccountForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="confirmText" class="form-label" style="color: white;">
+                Для подтверждения введите "<strong>{% if user.role.role_name == 'слушатель курсов' %}УДАЛИТЬ АККАУНТ{% else %}ДЕАКТИВИРОВАТЬ АККАУНТ{% endif %}</strong>"
+            </label>
+            <input type="text" class="form-control" id="confirmText" required 
+                   placeholder="{% if user.role.role_name == 'слушатель курсов' %}УДАЛИТЬ АККАУНТ{% else %}ДЕАКТИВИРОВАТЬ АККАУНТ{% endif %}">
+        </div>
+    </form>
+</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                    Удалить аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="contactModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Связаться с администрацией</h3>
+            <span class="close" onclick="closeContactModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Для ускорения процесса подтверждения аккаунта вы можете:</p>
+            <ul>
+                <li>Написать на email: <strong>unireax@mail.ru</strong></li>
+                <li>Позвонить по телефону: <strong>8-834-321-77-89 или 8-875-385-81-54</strong></li>
+                <li>Обратиться через форму обратной связи на странице "О нас"</li>
+
+            </ul>
+            <p>При обращении укажите ваше имя пользователя: <strong>{{ user.username }}</strong></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeContactModal()" class="profile-btn-primary">Закрыть</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/profile.js' %}"></script>
+
+<script>
+function showContactInfo() {
+    document.getElementById('contactModal').style.display = 'block';
+}
+
+function closeContactModal() {
+    document.getElementById('contactModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('contactModal');
+    if (event.target === modal) {
+        closeContactModal();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const navItems = document.querySelectorAll('.nav-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (this.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                
+                navItems.forEach(nav => nav.classList.remove('active'));
+                tabContents.forEach(tab => tab.classList.remove('active'));
+                
+                this.classList.add('active');
+                const targetTab = document.getElementById(this.getAttribute('href').substring(1) + '-tab');
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const progressCircles = document.querySelectorAll('.profile-progress-circle');
+    progressCircles.forEach(circle => {
+        const progress = circle.getAttribute('data-progress');
+        circle.style.setProperty('--progress', progress + '%');
+    });
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmTextInput = document.getElementById('confirmText');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const deleteAccountForm = document.getElementById('deleteAccountForm');
+    
+    if (confirmTextInput && confirmDeleteBtn) {
+        confirmTextInput.addEventListener('input', function() {
+            const confirmationText = 'УДАЛИТЬ АККАУНТ';
+            if (this.value.toUpperCase() === confirmationText) {
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.classList.remove('btn-secondary');
+                confirmDeleteBtn.classList.add('btn-danger');
+            } else {
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.classList.remove('btn-danger');
+                confirmDeleteBtn.classList.add('btn-secondary');
+            }
+        });
+        
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (!this.disabled) {
+                deleteAccountForm.submit();
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.profile-danger-zone {
+    border: 2px solid #dc3545;
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.profile-btn-danger {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-btn-danger:hover:not(:disabled) {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.profile-btn-danger:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ИСПРАВЛЕНИЯ ДЛЯ МОДАЛЬНОГО ОКНА */
+.modal.fade {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop.fade {
+    z-index: 1050 !important;
+}
+
+.modal-content {
+    background: #2d3748 !important;
+    color: white !important;
+    z-index: 1060 !important;
+    position: relative;
+}
+
+.modal-header {
+    border-bottom: 1px solid #4a5568;
+}
+
+.modal-footer {
+    border-top: 1px solid #4a5568;
+}
+
+/* Убедитесь, что модальное окно не заблокировано */
+.modal {
+    backdrop-filter: none !important;
+    background-color: transparent !important;
+}
+
+/* Исправление для затемненного фона */
+.modal-backdrop {
+    background-color: #000 !important;
+    opacity: 0.5 !important;
+}
+
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+}
+
+
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+}
+
+.verification-process {
+    max-width: 800px;
+}
+
+.verification-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.verification-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 1;
+}
+
+.verification-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.verification-step.active .step-number {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.step-content {
+    text-align: center;
+}
+
+.step-content h4 {
+    color: #fff;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.step-content p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    margin: 0;
+}
+
+.verification-actions-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.verification-action-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.verification-action-card h3 {
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.verification-action-card p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 15px;
+}
+
+.verification-action-card ul {
+    color: rgba(255, 255, 255, 0.8);
+    padding-left: 20px;
+}
+
+.verification-action-card li {
+    margin-bottom: 8px;
+}
+
+.documents-list {
+    margin-top: 15px;
+}
+
+.document-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.document-item:last-child {
+    border-bottom: none;
+}
+
+.document-name {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.document-status {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.document-status.uploaded {
+    background: #28a745;
+    color: white;
+}
+
+.document-status.missing {
+    background: #dc3545;
+    color: white;
+}
+
+.document-view {
+    color: #17a2b8;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.document-view:hover {
+    text-decoration: underline;
+}
+
+.verification-support {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid #17a2b8;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.verification-support h3 {
+    color: #17a2b8;
+    margin-bottom: 15px;
+}
+
+.verification-support p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 15px;
+}
+
+.support-contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.support-contact {
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 0;
+}
+
+.verification-notice {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+}
+
+.verification-notice p {
+    color: #ffc107;
+    margin: 0;
+    font-weight: 500;
+}
+
+.update-notice {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 15px;
+}
+
+.update-notice p {
+    color: #28a745;
+    margin: 0;
+    font-size: 14px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .verification-steps {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .verification-steps::before {
+        display: none;
+    }
+    
+    .verification-step {
+        flex-direction: row;
+        text-align: left;
+    }
+    
+    .step-number {
+        margin-right: 15px;
+        margin-bottom: 0;
+    }
+    
+    .verification-actions-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+.verification-banner {
+    background: linear-gradient(135deg, #987a19ff 0%, #6a5308ff 100%);
+    border: 1px solid #bab334ff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+}
+
+.verification-content {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.verification-icon {
+    margin-right: 16px;
+    padding-top: 4px;
+}
+
+.verification-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.verification-text h3 {
+    color: #ffffffff;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.verification-text p {
+    color: #ffffffff;
+    margin: 0 0 8px 0;
+    opacity: 0.9;
+}
+
+.verification-info small {
+    color: #ffffffff;
+    opacity: 0.8;
+}
+
+.verification-actions {
+    margin-left: 20px;
+}
+
+.verification-contact-btn {
+    background: #ffc107;
+    color: #221b05ff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.verification-contact-btn:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+}
+
+.verification-limitations {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 24px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.limitations-header h3 {
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.limitations-header p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+}
+
+.limitations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.limitation-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.limitation-icon {
+    margin-right: 12px;
+    font-size: 16px;
+}
+
+.limitation-text {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.profile-status-pending {
+    color: #ffc107;
+    font-weight: 500;
+}
+
+.badge-warning {
+    background: #ffc107;
+    color: #856404;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+#contactModal {
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#contactModal .modal-content {
+    background-color: #2d3748;
+    margin: 10% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#contactModal .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#contactModal .modal-header h3 {
+    margin: 0;
+    color: #fff;
+}
+
+#contactModal .close {
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#contactModal .close:hover {
+    color: #ffc107;
+}
+
+#contactModal .modal-body {
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#contactModal .modal-body ul {
+    margin: 16px 0;
+    padding-left: 20px;
+}
+
+#contactModal .modal-body li {
+    margin-bottom: 8px;
+}
+
+#contactModal .modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: right;
+}
+</style>
+{% endblock %}

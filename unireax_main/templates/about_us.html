@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}О нас - Unireax{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <div class="container py-4 py-md-5">
+    
+
+        <div class="row align-items-center mb-5">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="about-text pe-lg-5">
+                    <h2 style="color: white;" class="about-title mb-4">Кто мы и что это за ресурс?</h2>
+                    <p class="lead mb-3" style="color: white;">
+                        Unireax — это современная образовательная платформа, созданная для тех, кто хочет развиваться, учиться новому и достигать целей в любой удобной обстановке и в любое удобное время. Мы объединяем профессионалов, любителей, новичков, технологии, вдохновение и космос, чтобы каждый мог найти свой путь к знаниям в этой бесконечной Вселенной.
+                        <br>
+                        Через тернии к звёздам!
+                    </p>
+                  <ul class="about-advantages list-unstyled mt-4" style="color: white;">
+                    <li class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check text-purple me-3 mt-1" style="color: purple;"></i>
+                        <span><strong>Разнообразие программ</strong> — от коротких курсов по софт-скиллам до изучения нейросетей.</span>
+                    </li>
+                    <li class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check text-purple me-3 mt-1" style="color: purple;"></i>
+                        <span><strong>Наша команда</strong> — преподаватели и методисты из высших и среднеспециальных учебных заведений.</span>
+                    </li>
+                    <li class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check text-purple me-3 mt-1" style="color: purple;"></i>
+                        <span><strong>Онлайн-формат</strong> — обучение без отрыва от работы.</span>
+                    </li>
+                     <li class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check text-purple me-3 mt-1" style="color: purple;"></i>
+                        <span><strong>Сотрудничество с РЭУ им. Г.В. Плеханова</strong> — постоянная поддержка и создание новых учебных программ от экспертов.</span>
+                    </li>
+                </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="about-image-wrapper text-center">
+                    <img src="{% static 'images/reu.jpg' %}" alt="Unireax Team" class="about-image img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="faq-fullwidth">
+        <div class="container-fluid px-4 px-md-5">
+            <h3 class="text-center mb-3 faq-title">Ответы на частые вопросы</h3>
+            <hr class="divider mx-auto mb-5">
+
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Как начать обучение?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Зарегистрируйтесь как слушатель курса, выберите курс, запишитесь на него (или приобретите, если он платный) и начните обучение в удобное время. Доступ к материалам — 24/7.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Есть ли сертификаты после прохождения курсов?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Unireax предоставляет курсы как с сертификатами, так и без них. В описании курса будет указано наличие сертификата за его прохождение. Об этом также свидетельствует иконка в виде развернутого свитка на карточке курса из каталога. В таких курсах после прохождения вы получите 
+                            сертификат на имя, фамилию и отчество, которые указывали при регистрации на нашей платформе. 
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Можно учиться с телефона?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Конечно! Сайт адаптирован под мобильные устройства и планшеты. Учитесь где угодно.
+                        </div>
+                    </div>
+                </div>
+
+                   <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                           Я изменил имя/фамилию/отчество, но у меня уже есть зарегистрированный аккаунт. Как мне быть, если я хочу получать сертификаты по своим новым паспортным данным?
+                        </button>
+                    </h2>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Перейдите в личный кабинет, выберите вкладку "Профиль", введите свои новые данные и нажмите кнопку "Обновить профиль" - ваши данные мгновенно поменяются в базе.
+                        </div>
+                    </div>
+                </div>
+
+
+                 <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                            Я забыл пароль от аккаунта. Что мне делать?
+                        </button>
+                    </h2>
+                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Перейдите на форму авторизации по нажатию на навигационную кнопку "Войти" в шапке сайта. Нажмите на кнопку "Забыли пароль?", она перенесет вас на форму для сброса пароля. Вы вводите свою почту, которая привязана к аккаунту,
+                            на нее через непродолжительное время придет код восстановления. Вы вводите его в форме и в случае совпадения пароль сбрасывается, а Вам предоставляется возможность придумать новый пароль,
+                            который нужно будет подтвердить повторным вводом. После этого вы сможете авторизоваться под новыми учетным данными. Если вам не пришел код или возникли проблемы при входе - попробуйте заново сбросить пароль, если и в этом 
+                            случае ничего не помогло - обратитесь к нашим администраторам по адресу электронной почты: <a href="mailto:unireax@mail.ru">unireax@mail.ru</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="container py-4 py-md-5">
+         <h3 class="text-center mb-3 faq-title">Остались вопросы или хочешь внести своё предложение? Заполни форму ниже!</h3>
+        <hr class="divider mx-auto mb-5">
+
+        <section class="contact-form-section auth-container p-4 p-md-5 rounded-4 shadow-lg mx-auto" style="max-width: 500px;">
+            <h3 class="text-center mb-4 contact-title">Обратная связь</h3>
+            <form method="POST" class="contact-form">
+                {% csrf_token %}
+                <div class="auth-field mb-3">
+                    <input type="text" name="name" class="form-control form-control-custom" placeholder="Ваше имя" required 
+                           value="{{ request.POST.name|default:'' }}">
+                </div>
+                <div class="auth-field mb-3">
+                    <input type="email" name="email" class="form-control form-control-custom" placeholder="Email" required
+                           value="{{ request.POST.email|default:'' }}">
+                </div>
+                <div class="auth-field mb-4">
+                    <textarea name="message" class="form-control form-control-custom" rows="4" placeholder="Ваше сообщение" required>{{ request.POST.message|default:'' }}</textarea>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn-dream contact-btn w-100">Отправить</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

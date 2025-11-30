@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Роль: {{ role_obj.role_name }}{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о роли</h1>
+        
+        <div class="user-detail-card">
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                    <p><strong>ID:</strong> {{ role_obj.id }}</p>
+                    <p><strong>Название роли:</strong> {{ role_obj.role_name }}</p>
+                    <p><strong>Количество пользователей:</strong> 
+                        <span class="{% if users_count > 0 %}user-status-active{% else %}user-status-pending{% endif %}">
+                            {{ users_count }}
+                        </span>
+                    </p>
+                </div>
+                
+                {% if users_count > 0 %}
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Пользователи с этой ролью</h3>
+                    <div class="role-users-list">
+                        {% for user in role_obj.user_set.all|slice:":5" %}
+                        <div class="role-user-item">
+                            <span class="role-user-name">{{ user.last_name }} {{ user.first_name }}</span>
+                            <span class="role-user-email">({{ user.email }})</span>
+                        </div>
+                        {% endfor %}
+                        {% if users_count > 5 %}
+                        <div class="role-user-more">
+                            <em>... и еще {{ users_count|add:"-5" }} пользователь(ей)</em>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="user-detail-actions">
+            <a href="{% url 'create_update_role' role_obj.id %}" class="user-action-edit">Редактировать роль</a>
+            <a href="{% url 'delete_role' role_obj.id %}" class="user-action-delete">Удалить роль</a>
+            <a href="{% url 'role_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+    </div>
+</section>
+
+<style>
+.role-users-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    background: #f9f9f9;
+}
+
+.role-user-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.role-user-item:last-child {
+    border-bottom: none;
+}
+
+.role-user-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.role-user-email {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.role-user-more {
+    padding: 8px 0;
+    color: #888;
+    font-style: italic;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,954 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Результаты тестов - {{ course.course_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="test-results-section">
+    <div class="test-results-container">
+        <div class="results-header-section">
+            <div class="results-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'course_study' course.id %}">{{ course.course_name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>Результаты тестов</span>
+            </div>
+            <div class="results-title-section">
+                <h1 class="results-title">Результаты тестов</h1>
+                <p class="results-subtitle">Курс: {{ course.course_name }}</p>
+            </div>
+        </div>
+
+        <div class="results-content">
+            <aside class="results-sidebar">
+                <div class="stats-card">
+                    <h3>Общая статистика</h3>
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ total_attempts }}</div>
+                            <div class="stat-label">Всего попыток</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ passed_count }}</div>
+                            <div class="stat-label">Успешно сдано</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ average_score }}</div>
+                            <div class="stat-label">Средний балл</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ success_rate }}%</div>
+                            <div class="stat-label">Успешность</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-card">
+                    <h3>Фильтры</h3>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="radio" name="resultFilter" value="all" checked>
+                            <span class="filter-checkmark"></span>
+                            <span class="filter-text">Все результаты</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="resultFilter" value="passed">
+                            <span class="filter-checkmark"></span>
+                            <span class="filter-text">Только сданные</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="resultFilter" value="failed">
+                            <span class="filter-checkmark"></span>
+                            <span class="filter-text">Только несданные</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="actions-card">
+                    <a href="{% url 'course_study' course.id %}" class="back-to-course-btn">
+                        ← Вернуться к курсу
+                    </a>
+                </div>
+            </aside>
+
+            <main class="results-main">
+                {% if test_results %}
+                <div class="results-list">
+                    {% for result in test_results %}
+                    <div class="result-card 
+                        {% if result.test.grading_form == 'points' %}
+                            {% if result.final_score >= result.test.passing_score %}result-passed{% else %}result-failed{% endif %}
+                        {% else %}
+                            {% if result.is_passed %}result-passed{% else %}result-failed{% endif %}
+                        {% endif %}" 
+                        data-status="
+                        {% if result.test.grading_form == 'points' %}
+                            {% if result.final_score >= result.test.passing_score %}passed{% else %}failed{% endif %}
+                        {% else %}
+                            {% if result.is_passed %}passed{% else %}failed{% endif %}
+                        {% endif %}">
+                        <div class="result-header">
+                            <div class="result-test-info">
+                                <h3 class="result-test-name">{{ result.test.test_name }}</h3>
+                                <span class="result-lecture">
+                                    Лекция {{ result.test.lecture.lecture_order }}: {{ result.test.lecture.lecture_name }}
+                                </span>
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-attempt">Попытка {{ result.attempt_number }}</span>
+                                <span class="result-date">{{ result.completion_date|date:"d.m.Y H:i" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="result-details">
+                            <div class="result-score">
+                                {% if result.test.grading_form == 'points' %}
+                                <div class="score-display">
+                                    <span class="score-value">{{ result.final_score|default:0 }}</span>
+                                    <span class="score-label">баллов</span>
+                                </div>
+                                {% if result.test.passing_score %}
+                                <div class="passing-info">
+                                    Проходной балл: {{ result.test.passing_score }}
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="score-status">
+                                    <span class="status-text">
+                                        {{ result.is_passed|yesno:"Зачёт,Незачёт" }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="result-status">
+                                <span class="status-badge 
+                                    {% if result.test.grading_form == 'points' %}
+                                        {% if result.final_score >= result.test.passing_score %}status-passed{% else %}status-failed{% endif %}
+                                    {% else %}
+                                        {% if result.is_passed %}status-passed{% else %}status-failed{% endif %}
+                                    {% endif %}">
+                                    {% if result.test.grading_form == 'points' %}
+                                        {% if result.final_score >= result.test.passing_score %}Сдан{% else %}Не сдан{% endif %}
+                                    {% else %}
+                                        {{ result.is_passed|yesno:"Зачёт,Незачёт" }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="result-actions">
+                            {% if result.test.max_attempts and result.attempt_number < result.test.max_attempts %}
+                                {% if result.test.grading_form == 'points' %}
+                                    {% if result.final_score < result.test.passing_score %}
+                                        <a href="{% url 'test_start' result.test.id %}" class="retry-btn">Пересдать</a>
+                                    {% endif %}
+                                {% else %}
+                                    {% if not result.is_passed %}
+                                        <a href="{% url 'test_start' result.test.id %}" class="retry-btn">Пересдать</a>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            <button class="details-btn view-details-btn" data-result-id="{{ result.id }}">
+                                Детали
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-results">
+                    <div class="no-results-content">
+                        <div class="no-results-icon">📊</div>
+                        <h3>Результатов тестов пока нет</h3>
+                        <p>Пройдите тесты, чтобы увидеть здесь свои результаты</p>
+                        <a href="{% url 'course_study' course.id %}#tests" class="btn btn-primary">
+                            Перейти к тестам
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+</section>
+
+<div id="resultDetailsModal" class="test-modal">
+    <div class="test-modal-content">
+        <div class="test-modal-header">
+            <h3>Детали результата</h3>
+        </div>
+        <div class="test-modal-body">
+            <div id="resultDetailsContent">
+            </div>
+        </div>
+        <div class="test-modal-actions">
+            <button type="button" class="test-btn test-btn-primary" id="closeDetailsModal">
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    background-color: #7B7FD5 !important;
+}
+
+.test-results-section {
+    padding: 30px 0;
+    min-height: 100vh;
+}
+
+.test-results-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Хедер */
+.results-header-section {
+    margin-bottom: 40px;
+}
+
+.results-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.results-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.results-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.results-title-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.results-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.2em;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.results-subtitle {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.results-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.results-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 20px;
+}
+
+.stats-card,
+.filters-card,
+.actions-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.stats-card h3,
+.filters-card h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.stats-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.stat-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.8em;
+    color: #FFFFFF;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.stat-label {
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    color: #BFC3F7;
+    display: block;
+}
+
+/* Фильтры */
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+.filter-option input {
+    opacity: 0;
+    position: absolute;
+}
+
+.filter-checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(123, 127, 213, 0.6);
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.filter-option input:checked + .filter-checkmark {
+    border-color: #A020F0;
+    background: #A020F0;
+}
+
+.filter-option input:checked + .filter-checkmark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+}
+
+.filter-text {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    transition: color 0.3s ease;
+}
+
+.filter-option:hover .filter-text {
+    color: #FFFFFF;
+}
+
+.filter-option input:checked ~ .filter-text {
+    color: #FFFFFF;
+}
+
+.actions-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.back-to-course-btn,
+.view-all-results-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.back-to-course-btn {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.back-to-course-btn:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+}
+
+.view-all-results-btn {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.view-all-results-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+.results-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.result-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    transition: all 0.3s ease;
+    border-left: 5px solid transparent;
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.result-passed {
+    border-left-color: #28a745;
+}
+
+.result-failed {
+    border-left-color: #dc3545;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 20px;
+}
+
+.result-test-info {
+    flex: 1;
+}
+
+.result-test-name {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.3em;
+    margin: 0 0 8px 0;
+}
+
+.result-lecture {
+    color: #A020F0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.result-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.result-attempt {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    padding: 4px 10px;
+    background: rgba(123, 127, 213, 0.2);
+    border-radius: 12px;
+}
+
+.result-date {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+}
+
+.result-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.result-score {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.score-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #FFFFFF;
+}
+
+.score-label {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    color: #BFC3F7;
+}
+
+.passing-info {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+}
+
+.score-status {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+}
+
+.result-passed .score-status {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.result-failed .score-status {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.result-status {
+    flex-shrink: 0;
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.status-passed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.status-failed {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.result-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.retry-btn,
+.details-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.85em;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.retry-btn {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
+.retry-btn:hover {
+    background: rgba(255, 193, 7, 0.3);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+.details-btn {
+    background: rgba(123, 127, 213, 0.2);
+    color: #BFC3F7;
+    border-color: rgba(123, 127, 213, 0.4);
+}
+
+.details-btn:hover {
+    background: rgba(123, 127, 213, 0.3);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+/* Состояние без результатов */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.no-results-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.no-results h3 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 10px 0;
+    font-size: 1.3em;
+}
+
+.no-results p {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 20px 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+.test-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.test-modal.active {
+    display: flex;
+}
+
+.test-modal-content {
+    background: rgba(21, 29, 73, 0.95);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.test-modal-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.test-modal-header h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.5em;
+    margin: 0;
+}
+
+.test-modal-body {
+    margin-bottom: 25px;
+}
+
+.test-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.test-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.test-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.test-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+@media (max-width: 1024px) {
+    .results-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .results-sidebar {
+        position: static;
+        order: -1;
+    }
+    
+    .stats-list {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .results-title {
+        font-size: 1.8em;
+    }
+    
+    .result-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .result-meta {
+        align-items: flex-start;
+        text-align: left;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .result-details {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .result-score {
+        justify-content: space-between;
+    }
+    
+    .result-actions {
+        justify-content: center;
+    }
+    
+    .stats-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .test-results-container {
+        padding: 0 15px;
+    }
+    
+    .results-title-section {
+        padding: 20px;
+    }
+    
+    .results-title {
+        font-size: 1.5em;
+    }
+    
+    .result-card {
+        padding: 20px;
+    }
+    
+    .stats-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+body.dark-theme .results-title-section,
+body.dark-theme .stats-card,
+body.dark-theme .filters-card,
+body.dark-theme .actions-card,
+body.dark-theme .result-card,
+body.dark-theme .no-results {
+    background: rgba(26, 31, 46, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .stat-item,
+body.dark-theme .result-details {
+    background: rgba(99, 102, 241, 0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterOptions = document.querySelectorAll('input[name="resultFilter"]');
+    const resultCards = document.querySelectorAll('.result-card');
+    
+    filterOptions.forEach(option => {
+        option.addEventListener('change', function() {
+            const filterValue = this.value;
+            
+            resultCards.forEach(card => {
+                const status = card.dataset.status;
+                
+                if (filterValue === 'all' || 
+                    (filterValue === 'passed' && status === 'passed') ||
+                    (filterValue === 'failed' && status === 'failed')) {
+                    card.style.display = 'block';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 50);
+                } else {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        card.style.display = 'none';
+                    }, 300);
+                }
+            });
+        });
+    });
+
+    const detailsModal = document.getElementById('resultDetailsModal');
+    const detailsContent = document.getElementById('resultDetailsContent');
+    const closeDetailsBtn = document.getElementById('closeDetailsModal');
+    
+    closeDetailsBtn.addEventListener('click', function() {
+        detailsModal.classList.remove('active');
+    });
+    
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.classList.remove('active');
+        }
+    });
+    
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const resultId = this.dataset.resultId;
+            loadResultDetails(resultId);
+        });
+    });
+    
+    function loadResultDetails(resultId) {
+        detailsContent.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
+                <p style="color: #BFC3F7;">Загрузка деталей результата...</p>
+            </div>
+        `;
+        
+        detailsModal.classList.add('active');
+     
+        setTimeout(() => {
+            detailsContent.innerHTML = `
+                <div style="text-align: center;">
+                    <h4 style="color: #FFFFFF; margin-bottom: 15px;">Функция в разработке</h4>
+                    <p style="color: #BFC3F7;">Детализированный просмотр результатов будет доступен в ближайшее время.</p>
+                </div>
+            `;
+        }, 1000);
+    }
+    
+    resultCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}UNIREAX - Оплата успешна{% endblock %}
+
+{% block content %}
+<section style="padding: 80px 20px; background: linear-gradient(135deg, #7B7FD5 0%, #86A8E7 50%, #91EAE4 100%); min-height: 100vh; display: flex; align-items: center;">
+    <div style="max-width: 700px; margin: 0 auto; background: #151D49; padding: 50px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); color: #FFFFFF; text-align: center;">
+        
+        <div style="background: #4CAF50; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; font-size: 2.5em;">
+            ✅
+        </div>
+        
+        <h1 style="font-family: 'Arial Black', sans-serif; font-size: 2.5em; color: #FFFFFF; margin-bottom: 20px;">
+            Оплата успешна!
+        </h1>
+        
+        <p style="font-size: 1.2em; color: #BFC3F7; margin-bottom: 10px;">
+            Курс <strong>"{{ course.course_name }}"</strong> успешно оплачен.
+        </p>
+        
+        <p style="font-size: 1.1em; color: #BFC3F7; margin-bottom: 30px;">
+            Сумма: <strong>{{ course.course_price }} ₽</strong>
+        </p>
+        
+        <div style="background: rgba(76, 175, 80, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+            <p style="margin: 0; color: #4CAF50; font-weight: bold;">
+                🎉 Поздравляем! Вы успешно записаны на курс.
+            </p>
+        </div>
+
+        <div style="background: rgba(88, 100, 241, 0.1); padding: 25px; border-radius: 15px; margin-bottom: 30px; border: 2px dashed #5864F1;">
+            <h3 style="color: #FFFFFF; margin-bottom: 20px; font-family: 'Arial Black', sans-serif;">
+                📄 Чек об оплате
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 25px;">
+                <div>
+                    <p style="margin: 0 0 8px; color: #BFC3F7; font-size: 0.9em;">Номер платежа:</p>
+                    <p style="margin: 0; color: #FFFFFF; font-weight: bold; font-family: monospace;">{{ payment_id }}</p>
+                </div>
+                <div>
+                    <p style="margin: 0 0 8px; color: #BFC3F7; font-size: 0.9em;">Дата оплаты:</p>
+                    <p style="margin: 0; color: #FFFFFF; font-weight: bold;">{{ user_course.payment_date|date:"d.m.Y" }}</p>
+                </div>
+                <div>
+                    <p style="margin: 0 0 8px; color: #BFC3F7; font-size: 0.9em;">Слушатель:</p>
+                    <p style="margin: 0; color: #FFFFFF; font-weight: bold;">{{ user.last_name }} {{ user.first_name }}</p>
+                </div>
+                <div>
+                    <p style="margin: 0 0 8px; color: #BFC3F7; font-size: 0.9em;">Статус:</p>
+                    <p style="margin: 0; color: #4CAF50; font-weight: bold;">Оплачено</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'download_receipt' course.id payment_id %}" 
+                   style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    Скачать чек (PDF)
+                </a>
+                
+                <button onclick="printReceipt()" 
+                        style="background: linear-gradient(135deg, #5864F1, #7B7FD5); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    Распечатать чек
+                </button>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'course_enroll_detail' course.id %}" 
+               style="background: #5864F1; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+                Перейти к курсу
+            </a>
+            <a href="/" 
+               style="background: #491983; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+                На главную
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #5864F1;">
+            <p style="color: #BFC3F7; font-size: 0.9em; margin: 0;">
+                Чек также отправлен на вашу почту: <strong>{{ user.email }}</strong><br>
+                Сохраните чек для отчетности
+            </p>
+        </div>
+    </div>
+</section>
+
+<style>
+a:hover, button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .receipt-print, .receipt-print * {
+        visibility: visible;
+    }
+    .receipt-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+function printReceipt() {
+    const receiptContent = `
+        <div class="receipt-print" style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <div style="text-align: center; margin-bottom: 20px; background: #7B7FD5; color: white; padding: 20px; border-radius: 10px;">
+                <h1 style="margin: 0;">UNIREAX</h1>
+                <p style="margin: 5px 0 0;">Образовательная платформа</p>
+            </div>
+            
+            <h2 style="text-align: center; color: #151D49;">ЧЕК ОБ ОПЛАТЕ КУРСА</h2>
+            
+            <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #5864F1; margin-bottom: 15px;">Информация о платеже</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Номер платежа:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ payment_id }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Дата оплаты:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ user_course.payment_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Статус:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #4CAF50; font-weight: bold;">Оплачено</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #5864F1; margin-bottom: 15px;">Информация о курсе</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Название курса:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ course.course_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Категория:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ course.course_category.course_category_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Сумма:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 1.2em;">{{ course.course_price }} ₽</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #5864F1; margin-bottom: 15px;">Информация о пользователе</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">ФИО:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ user.last_name }} {{ user.first_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Email:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ user.email }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #7B7FD5;">
+                <p style="color: #666; font-size: 0.9em;">
+                    Чек №{{ payment_id }}<br>
+                    Документ сгенерирован автоматически
+                </p>
+            </div>
+        </div>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Чек об оплате - UNIREAX</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 0; 
+                        padding: 20px;
+                        color: #333;
+                    }
+                    @media print { 
+                        body { margin: 0; padding: 15px; }
+                        .receipt-print { margin: 0; }
+                    }
+                    table { width: 100%; border-collapse: collapse; }
+                    td { padding: 8px; border-bottom: 1px solid #ddd; }
+                </style>
+            </head>
+            <body>${receiptContent}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.onafterprint = function() {
+            printWindow.close();
+        };
+    }, 500);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+<!-- в данном файле находится верстка для шапки (хэдера) сайта -->
+{% load static %}
+<div class="header-container">
+    <div class="logo-group">
+        <img src="{% static 'icons/unireax_logo.png' %}" alt="UNIREAX Logo" class="header-logo-img">
+        <a style="text-decoration: none;" href="{% url 'main' %}"><h1 class="header-logo">UNIREAX</h1></a>
+    </div>
+    
+    <button class="nav-button" type="button" aria-label="Toggle navigation">☰</button>
+    
+    <div class="nav-wrapper">
+        <nav class="header-nav">
+            <div class="nav-menu">
+                <a href="{% url 'main' %}">Главная</a>
+                <a href="{% url 'catalog' %}">Каталог</a>
+                <a href="{% url 'about_us' %}">О нас</a>
+             {% if user.is_authenticated %}
+    <div class="dropdown profile-menu">
+        <a href="#" class="profile-link dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Личный кабинет
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="profileDropdown">
+            <li><a class="dropdown-item" href="{% url 'profile' %}">Профиль</a></li>
+            
+            {% if user.is_admin or user.is_superuser %}
+            <li><a class="dropdown-item" href="{% url 'admin_panel' %}">Администрирование</a></li>
+            {% endif %}
+            
+            {% if user.role.role_name == 'методист' and user.is_verified %}
+            <li><a class="dropdown-item" href="{% url 'methodist_dashboard' %}">Дашборд методиста</a></li>
+            {% endif %}
+            
+            {% if user.role.role_name == 'преподаватель' and user.is_verified %}
+            <li><a class="dropdown-item" href="{% url 'create_course' %}">Создать курс</a></li>
+            <li><a class="dropdown-item" href="{% url 'teacher_courses' %}">Мои курсы</a></li>
+            {% endif %}
+            
+            {% if user.role.role_name == 'слушатель курсов' %}
+            <li>
+                <a class="dropdown-item" href="{% url 'favorites_page' %}">
+                    Избранное 
+                </a>
+            </li>
+            {% endif %}
+
+             {% if user.role.role_name == 'слушатель курсов' %}
+            <li>
+                <a class="dropdown-item" href="{% url 'my_certificates' %}">
+                    Мои сертификаты 
+                </a>
+            </li>
+            {% endif %}
+            
+            {% if user.role.role_name == 'методист' and user.is_verified %}
+            <li>
+                <a class="dropdown-item" href="{% url 'methodist_statistics' %}">
+                    Статистика 
+                </a>
+            </li>
+            {% endif %}
+            
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+        </ul>
+    </div>
+{% else %}
+                    <a href="{% url 'auth' %}">Войти</a>
+                {% endif %}
+                
+                <div class="search-and-theme-wrapper">
+                    <div class="search-wrapper">
+                        <div class="search-bar">
+                            <input type="text" id="search-input" placeholder="Название курса..">
+                            <button id="search-button">
+                                <img src="{% static 'icons/search.png' %}" alt="Search">
+                            </button>
+                        </div>
+                        <div class="search-results" id="search-results-desktop"></div>
+                    </div>
+                    
+                    <button class="theme-toggle-btn-global" id="themeToggleGlobal" title="Переключить тему">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>

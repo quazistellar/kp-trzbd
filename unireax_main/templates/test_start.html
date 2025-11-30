@@ -1,0 +1,1561 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+{{ test.test_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="test-section">
+    <div class="test-container" 
+         data-test-id="{{ test.id }}" 
+         data-total-questions="{{ questions|length }}" 
+         data-attempt-number="{{ attempt_number }}">
+        <div class="test-header-section">
+            <div class="test-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'course_study' test.lecture.course.id %}">{{ test.lecture.course.course_name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ test.test_name }}</span>
+            </div>
+            
+            <div class="test-title-section">
+                <h1 class="test-title">{{ test.test_name }}</h1>
+                <div class="test-meta-info">
+                    <div class="test-meta">
+                        <span class="test-attempt">Попытка {{ attempt_number }}{% if test.max_attempts %} из {{ test.max_attempts }}{% endif %}</span>
+                        <span class="test-lecture">Лекция {{ test.lecture.lecture_order }}</span>
+                        {% if test.passing_score %}
+                        <span class="test-passing">Проходной балл: {{ test.passing_score }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-content">
+            <aside class="test-sidebar">
+                <div class="test-info-card">
+                    <h3>Информация о тесте</h3>
+                    <div class="test-info-list">
+                        <div class="test-info-item">
+                            <span class="info-label">Вопросов:</span>
+                            <span class="info-value">{{ questions|length }}</span>
+                        </div>
+                        <div class="test-info-item">
+                            <span class="info-label">Тип оценки:</span>
+                            <span class="info-value">{{ test.get_grading_form_display }}</span>
+                        </div>
+                        <div class="test-info-item">
+                            <span class="info-label">Макс. попыток:</span>
+                            <span class="info-value">{{ test.max_attempts|default:"Не ограничено" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-progress">
+                    <h4>Прогресс</h4>
+                    <div class="progress-questions">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="answeredCount">0</span> из {{ questions|length }} вопросов
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-navigation-sidebar">
+                    <h4>Навигация по вопросам</h4>
+                    <div class="questions-nav" id="questionsNav">
+                        {% for question in questions %}
+                        <button class="nav-question" data-question="{{ forloop.counter0 }}">
+                            {{ forloop.counter }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </aside>
+
+            <section class="test-main">
+                {% if test.test_description %}
+                <div class="test-description-card">
+                    <h3>Описание теста</h3>
+                    <p>{{ test.test_description }}</p>
+                </div>
+                {% endif %}
+
+                <form id="testForm" class="test-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="attempt_number" value="{{ attempt_number }}">
+                    
+                    <div class="questions-list">
+                        {% for question in questions %}
+                        <div class="question-card" id="question-{{ forloop.counter0 }}" data-question-id="{{ question.id }}">
+                            <div class="question-header">
+                                <h3 class="question-number">Вопрос {{ forloop.counter }}</h3>
+                                <span class="question-score">{{ question.question_score }} балл{{ question.question_score|pluralize:"а,ов" }}</span>
+                            </div>
+                            
+                            <div class="question-text">
+                                {{ question.question_text|linebreaks }}
+                            </div>
+
+                            <div class="question-answers">
+                                {% if question.answer_type.answer_type_name == 'single_choice' %}
+                                <div class="single-choice-answers">
+                                    {% for option in question.choiceoption_set.all %}
+                                    <label class="radio-option">
+                                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}">
+                                        <span class="radio-checkmark"></span>
+                                        <span class="option-text">{{ option.option_text }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+
+                                {% elif question.answer_type.answer_type_name == 'multiple_choice' %}
+                                <div class="multiple-choice-answers">
+                                    {% for option in question.choiceoption_set.all %}
+                                    <label class="checkbox-option">
+                                        <input type="checkbox" name="question_{{ question.id }}" value="{{ option.id }}">
+                                        <span class="checkbox-checkmark"></span>
+                                        <span class="option-text">{{ option.option_text }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+
+                                {% elif question.answer_type.answer_type_name == 'text_answer' %}
+                                <div class="text-answer">
+                                    <textarea name="question_{{ question.id }}" rows="4" placeholder="Введите ваш ответ..."></textarea>
+                                </div>
+
+                                {% elif question.answer_type.answer_type_name == 'matching' %}
+                                <div class="matching-answer">
+                                    <div class="matching-pairs">
+                                        {% for pair in question.matchingpair_set.all %}
+                                        <div class="matching-pair">
+                                            <span class="left-text">{{ pair.left_text }}</span>
+                                            <select name="question_{{ question.id }}_{{ pair.id }}">
+                                                <option value="">Выберите соответствие</option>
+                                                {% for right_pair in question.matchingpair_set.all %}
+                                                <option value="{{ right_pair.right_text }}">{{ right_pair.right_text }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="test-actions">
+                        <button type="button" class="study-btn study-btn-outline" id="prevQuestion" style="display: none;">
+                            <i class="fas fa-arrow-left"></i>
+                            Назад
+                        </button>
+                        <button type="button" class="study-btn study-btn-primary" id="nextQuestion">
+                            Далее
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="button" class="study-btn study-btn-success" id="submitTest" style="display: none;">
+                            <i class="fas fa-check"></i>
+                            Завершить тест
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+</section>
+
+<div id="confirmModal" class="test-modal">
+    <div class="test-modal-content">
+        <div class="test-modal-header">
+            <h3>Подтверждение отправки</h3>
+        </div>
+        <div class="test-modal-body">
+            <p>Вы уверены, что хотите завершить тест? После отправки изменить ответы будет невозможно.</p>
+            <div class="completion-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Отвечено вопросов:</span>
+                    <span class="stat-value" id="answeredStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Осталось вопросов:</span>
+                    <span class="stat-value" id="remainingStat">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="test-modal-actions">
+            <button type="button" class="study-btn study-btn-outline" id="cancelSubmit">Вернуться к тесту</button>
+            <button type="button" class="study-btn study-btn-success" id="confirmSubmit">Да, завершить тест</button>
+        </div>
+    </div>
+</div>
+
+<div id="resultModal" class="test-modal">
+    <div class="test-modal-content result-modal-content">
+        <div class="test-modal-header">
+            <h3>Результат теста</h3>
+        </div>
+        <div class="test-modal-body">
+            <div id="resultContent">
+                <div class="result-content">
+                    <div class="result-score-container">
+                        <div class="result-score">0</div>
+                        <div class="result-max-score">из 0 баллов</div>
+                    </div>
+                    <div class="result-status status-passed">
+                        Тест сдан!
+                    </div>
+                    <div class="result-message">Проходной балл: 0</div>
+                    <div class="result-message">Поздравляем! Вы успешно прошли тест.</div>
+                </div>
+            </div>
+        </div>
+        <div class="test-modal-actions result-modal-actions">
+            <button type="button" class="study-btn study-btn-primary" id="closeResultModal">
+                Закрыть
+            </button>
+            <a href="{% url 'course_study' test.lecture.course.id %}" class="study-btn study-btn-outline">
+                Вернуться к курсу
+            </a>
+            <a href="{% url 'all_test_results' test.lecture.course.id %}" class="study-btn study-btn-outline">
+                Все результаты
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: transparent;
+}
+
+.test-section {
+    padding: 0;
+    min-height: 100vh;
+}
+
+.test-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.test-header-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.test-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+}
+
+.test-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+}
+
+.test-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.test-title-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.test-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: clamp(1.8em, 5vw, 2.5em);
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.test-meta-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.test-meta {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.test-attempt,
+.test-lecture,
+.test-passing {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.test-attempt {
+    background: rgba(160, 32, 240, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(160, 32, 240, 0.4);
+}
+
+.test-lecture {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.test-passing {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(191, 195, 247, 0.3);
+}
+
+.test-content {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 30px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Боковая панель */
+.test-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+
+.test-info-card,
+.test-progress,
+.test-navigation-sidebar {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.test-info-card h3,
+.test-progress h4,
+.test-navigation-sidebar h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 20px 0;
+    font-size: 1.2em;
+}
+
+.test-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.test-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.test-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.95em;
+    flex: 1;
+}
+
+.info-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.95em;
+    font-weight: bold;
+    text-align: right;
+    flex: 1;
+}
+
+.progress-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(191, 195, 247, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #A020F0, #7B7FD5);
+    border-radius: 10px;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    color: #BFC3F7;
+}
+
+/* Навигация по вопросам */
+.questions-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.nav-question {
+    width: 45px;
+    height: 45px;
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: none;
+}
+
+.nav-question:hover {
+    border-color: #A020F0;
+    color: #FFFFFF;
+}
+
+.nav-question.current {
+    background: #A020F0;
+    border-color: #A020F0;
+    color: #FFFFFF;
+}
+
+.nav-question.answered {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+    color: #28a745;
+}
+
+/* Основной контент теста */
+.test-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    min-width: 0;
+}
+
+.test-description-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.test-description-card h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.3em;
+}
+
+.test-description-card p {
+    color: #BFC3F7;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1em;
+}
+
+/* Форма теста */
+.test-form {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.questions-list {
+    position: relative;
+    min-height: 400px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.question-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    box-sizing: border-box;
+}
+
+.question-card.active {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+    gap: 20px;
+    flex-wrap: nowrap;
+}
+
+.question-number {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.4em;
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.question-score {
+    color: #A020F0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    padding: 8px 16px;
+    background: rgba(160, 32, 240, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(160, 32, 240, 0.4);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.question-text {
+    color: #FFFFFF;
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.question-text p {
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.question-text p:last-child {
+    margin-bottom: 0;
+}
+
+/* Варианты ответов */
+.question-answers {
+    margin-top: 20px;
+}
+
+.single-choice-answers,
+.multiple-choice-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.radio-option,
+.checkbox-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    transition: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.radio-option:hover,
+.checkbox-option:hover {
+    border-color: #A020F0;
+    background: rgba(160, 32, 240, 0.1);
+}
+
+.radio-option input,
+.checkbox-option input {
+    opacity: 0;
+    position: absolute;
+}
+
+.radio-checkmark,
+.checkbox-checkmark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(123, 127, 213, 0.6);
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checkbox-checkmark {
+    border-radius: 5px;
+}
+
+.radio-option input:checked + .radio-checkmark {
+    border-color: #A020F0;
+    background: #A020F0;
+}
+
+.radio-option input:checked + .radio-checkmark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+}
+
+.checkbox-option input:checked + .checkbox-checkmark {
+    border-color: #A020F0;
+    background: #A020F0;
+}
+
+.checkbox-option input:checked + .checkbox-checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.option-text {
+    color: #FFFFFF;
+    line-height: 1.5;
+    flex: 1;
+    font-size: 1em;
+    word-break: break-word;
+    padding-right: 10px;
+}
+
+/* Текстовый ответ */
+.text-answer textarea {
+    width: 100%;
+    min-height: 150px;
+    background: rgba(21, 29, 73, 0.9);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    padding: 20px;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 1em;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.text-answer textarea:focus {
+    border-color: #A020F0;
+}
+
+.text-answer textarea::placeholder {
+    color: #7B7FD5;
+    font-size: 1em;
+}
+
+.matching-pairs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.matching-pair {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    flex-wrap: wrap;
+}
+
+.left-text {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    min-width: 200px;
+    flex: 1;
+}
+
+.matching-pair select {
+    background: rgba(191, 195, 247, 0.1);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    outline: none;
+    flex: 1;
+    min-width: 200px;
+    box-sizing: border-box;
+}
+
+.matching-pair select:focus {
+    border-color: #A020F0;
+}
+
+.matching-pair select option {
+    background: #151D49;
+    color: #FFFFFF;
+    padding: 12px;
+}
+
+.test-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 25px;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.study-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    white-space: nowrap;
+    transition: none;
+}
+
+.study-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.study-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.study-btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.study-btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+/* Стили для модальных окон */
+.test-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.test-modal-content {
+    background: rgba(21, 29, 73, 0.95);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.result-modal-content {
+    max-width: 600px;
+}
+
+.test-modal-header {
+    padding: 25px 30px 0;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.test-modal-header h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 25px 0;
+    font-size: 1.4em;
+    text-align: center;
+}
+
+.test-modal-body {
+    padding: 25px 30px;
+}
+
+.test-modal-body p {
+    color: #BFC3F7;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.completion-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    background-color: #605c9f;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.stat-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    margin-left: 15px;
+}
+
+.stat-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.test-modal-actions {
+    padding: 20px 30px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.result-modal-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.result-modal-actions .study-btn {
+    min-width: 140px;
+    justify-content: center;
+    text-align: center;
+}
+
+.result-content {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.result-score-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.result-score {
+    font-family: "Arial Black", sans-serif;
+    font-size: 4em;
+    color: #A020F0;
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.result-max-score {
+    color: #BFC3F7;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.result-status {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.4em;
+    padding: 12px 24px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+.status-passed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.4);
+}
+
+.status-failed {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.4);
+}
+
+.result-message {
+    color: #BFC3F7;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+@media (max-width: 1200px) {
+    .test-content {
+        grid-template-columns: 280px 1fr;
+        gap: 25px;
+        padding: 0 20px;
+    }
+    
+    .questions-nav {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .test-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .test-sidebar {
+        position: static;
+        order: -1;
+    }
+    
+    .questions-nav {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .test-info-card,
+    .test-progress,
+    .test-navigation-sidebar {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .test-title-section {
+        text-align: center;
+        padding: 0 15px;
+    }
+    
+    .test-meta-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .test-meta {
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .test-attempt,
+    .test-lecture,
+    .test-passing {
+        padding: 6px 12px;
+        font-size: 0.8em;
+    }
+    
+    .question-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .question-score {
+        align-self: flex-start;
+    }
+    
+    .test-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .study-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .matching-pair {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .left-text {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .matching-pair select {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .test-modal-actions {
+        flex-direction: column;
+    }
+    
+    .result-modal-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .result-modal-actions .study-btn {
+        width: 200px;
+    }
+    
+    .result-score {
+        font-size: 3em;
+    }
+}
+
+@media (max-width: 480px) {
+    .test-breadcrumb,
+    .test-title-section,
+    .test-content {
+        padding: 0 15px;
+    }
+    
+    .test-header-section {
+        padding: 20px 0;
+    }
+    
+    .test-title {
+        font-size: 1.6em;
+    }
+    
+    .test-form,
+    .test-description-card {
+        padding: 20px;
+    }
+    
+    .question-card {
+        padding: 20px;
+    }
+    
+    .questions-nav {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    
+    .nav-question {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9em;
+    }
+    
+    .radio-option,
+    .checkbox-option {
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .option-text {
+        font-size: 0.95em;
+    }
+    
+    .test-modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .test-modal-header,
+    .test-modal-body,
+    .test-modal-actions {
+        padding: 20px;
+    }
+    
+    .result-score {
+        font-size: 2.5em;
+    }
+}
+
+.study-btn,
+.nav-question,
+.radio-option,
+.checkbox-option,
+.matching-pair select,
+.text-answer textarea {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.study-btn:hover,
+.nav-question:hover,
+.radio-option:hover,
+.checkbox-option:hover {
+    transform: none !important;
+}
+
+.study-btn-primary:hover,
+.study-btn-outline:hover,
+.study-btn-success:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.test-title {
+    text-shadow: none !important;
+}
+
+.test-section,
+.test-container,
+.test-content {
+    background: transparent !important;
+}
+
+.test-info-card,
+.test-progress,
+.test-navigation-sidebar,
+.test-description-card,
+.test-form,
+.question-card {
+    background: rgba(21, 29, 73, 0.95) !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(123, 127, 213, 0.3) !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const testContainer = document.querySelector('.test-container');
+    const testId = testContainer.dataset.testId;
+    const totalQuestions = parseInt(testContainer.dataset.totalQuestions);
+    const attemptNumber = parseInt(testContainer.dataset.attemptNumber);
+    
+    let currentQuestion = 0;
+    const userAnswers = {};
+    
+    function initTest() {
+        showQuestion(0);
+        updateProgress();
+        updateNavigation();
+        updateButtonVisibility();
+        
+        document.getElementById('prevQuestion').addEventListener('click', goToPrevQuestion);
+        document.getElementById('nextQuestion').addEventListener('click', goToNextQuestion);
+        document.getElementById('submitTest').addEventListener('click', showConfirmModal);
+
+        document.getElementById('cancelSubmit').addEventListener('click', hideConfirmModal);
+        document.getElementById('confirmSubmit').addEventListener('click', submitTest);
+        document.getElementById('closeResultModal').addEventListener('click', closeResultModal);
+        
+        document.querySelectorAll('.nav-question').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const questionIndex = parseInt(this.dataset.question);
+                showQuestion(questionIndex);
+            });
+        });
+
+        document.querySelectorAll('input, textarea, select').forEach(element => {
+            element.addEventListener('change', function() {
+                saveAnswer(currentQuestion, this);
+                updateProgress();
+                updateNavigation();
+            });
+            
+            if (element.tagName === 'TEXTAREA') {
+                element.addEventListener('input', function() {
+                    saveAnswer(currentQuestion, this);
+                    updateProgress();
+                    updateNavigation();
+                });
+            }
+        });
+        
+        loadSavedAnswers();
+    }
+    
+    function showQuestion(index) {
+        document.querySelectorAll('.question-card').forEach(card => {
+            card.classList.remove('active');
+            card.style.display = 'none';
+        });
+        
+        const questionCard = document.getElementById(`question-${index}`);
+        if (questionCard) {
+            questionCard.classList.add('active');
+            questionCard.style.display = 'block';
+        }
+        
+        currentQuestion = index;
+        
+        document.querySelectorAll('.nav-question').forEach(btn => {
+            btn.classList.remove('current');
+        });
+        
+        const currentNavBtn = document.querySelector(`.nav-question[data-question="${index}"]`);
+        if (currentNavBtn) {
+            currentNavBtn.classList.add('current');
+        }
+        
+        updateButtonVisibility();
+    }
+    
+    function goToPrevQuestion() {
+        if (currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }
+    
+    function goToNextQuestion() {
+        if (currentQuestion < totalQuestions - 1) {
+            showQuestion(currentQuestion + 1);
+        }
+    }
+    
+    function updateButtonVisibility() {
+        const prevBtn = document.getElementById('prevQuestion');
+        const nextBtn = document.getElementById('nextQuestion');
+        const submitBtn = document.getElementById('submitTest');
+        
+        prevBtn.style.display = currentQuestion > 0 ? 'inline-flex' : 'none';
+        nextBtn.style.display = currentQuestion < totalQuestions - 1 ? 'inline-flex' : 'none';
+        submitBtn.style.display = currentQuestion === totalQuestions - 1 ? 'inline-flex' : 'none';
+    }
+    
+    function saveAnswer(questionIndex, element) {
+        const questionCard = document.getElementById(`question-${questionIndex}`);
+        if (!questionCard) return;
+        
+        const questionId = questionCard.dataset.questionId;
+        
+        if (element.type === 'radio') {
+            if (element.checked) {
+                userAnswers[questionId] = element.value;
+            }
+        } else if (element.type === 'checkbox') {
+            if (!userAnswers[questionId]) {
+                userAnswers[questionId] = [];
+            }
+            
+            const checkboxes = document.querySelectorAll(`input[name="question_${questionId}"]`);
+            userAnswers[questionId] = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+                
+        } else if (element.tagName === 'TEXTAREA') {
+            userAnswers[questionId] = element.value.trim();
+        } else if (element.tagName === 'SELECT') {
+            if (!userAnswers[questionId]) {
+                userAnswers[questionId] = {};
+            }
+            const pairId = element.name.split('_').pop();
+            userAnswers[questionId][pairId] = element.value;
+        }
+        
+        saveToLocalStorage();
+        updateQuestionNavigation(questionIndex);
+    }
+    
+    function updateQuestionNavigation(questionIndex) {
+        const questionCard = document.getElementById(`question-${questionIndex}`);
+        if (!questionCard) return;
+        
+        const questionId = questionCard.dataset.questionId;
+        const navBtn = document.querySelector(`.nav-question[data-question="${questionIndex}"]`);
+        
+        if (navBtn) {
+            if (isQuestionAnswered(questionId)) {
+                navBtn.classList.add('answered');
+            } else {
+                navBtn.classList.remove('answered');
+            }
+        }
+    }
+    
+    function isQuestionAnswered(questionId) {
+        const answer = userAnswers[questionId];
+        if (!answer) return false;
+        
+        if (Array.isArray(answer)) {
+            return answer.length > 0;
+        } else if (typeof answer === 'object') {
+            return Object.values(answer).some(val => val && val !== '');
+        } else {
+            return answer !== '' && answer != null;
+        }
+    }
+    
+    function updateProgress() {
+        let answeredCount = 0;
+        
+        for (let i = 0; i < totalQuestions; i++) {
+            const questionCard = document.getElementById(`question-${i}`);
+            if (questionCard) {
+                const questionId = questionCard.dataset.questionId;
+                if (isQuestionAnswered(questionId)) {
+                    answeredCount++;
+                }
+            }
+        }
+        
+        document.getElementById('answeredCount').textContent = answeredCount;
+        const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+        document.getElementById('progressFill').style.width = `${progressPercent}%`;
+    }
+    
+    function updateNavigation() {
+        for (let i = 0; i < totalQuestions; i++) {
+            updateQuestionNavigation(i);
+        }
+    }
+    
+    function saveToLocalStorage() {
+        const saveData = {
+            testId: testId,
+            attemptNumber: attemptNumber,
+            answers: userAnswers,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(`test_${testId}_attempt_${attemptNumber}`, JSON.stringify(saveData));
+    }
+    
+    function loadSavedAnswers() {
+        const saved = localStorage.getItem(`test_${testId}_attempt_${attemptNumber}`);
+        if (saved) {
+            try {
+                const saveData = JSON.parse(saved);
+                Object.assign(userAnswers, saveData.answers);
+                
+                for (const [questionId, answer] of Object.entries(saveData.answers)) {
+                    const questionCard = document.querySelector(`[data-question-id="${questionId}"]`);
+                    if (questionCard) {
+                        if (Array.isArray(answer)) {
+                            answer.forEach(optionId => {
+                                const checkbox = questionCard.querySelector(`input[type="checkbox"][value="${optionId}"]`);
+                                if (checkbox) checkbox.checked = true;
+                            });
+                        } else if (typeof answer === 'object') {
+                            for (const [pairId, selectedValue] of Object.entries(answer)) {
+                                const select = questionCard.querySelector(`select[name*="${pairId}"]`);
+                                if (select && selectedValue) select.value = selectedValue;
+                            }
+                        } else {
+                            if (questionCard.querySelector('input[type="radio"]')) {
+                                const radio = questionCard.querySelector(`input[type="radio"][value="${answer}"]`);
+                                if (radio) radio.checked = true;
+                            } else if (questionCard.querySelector('textarea')) {
+                                const textarea = questionCard.querySelector('textarea');
+                                if (textarea) textarea.value = answer;
+                            }
+                        }
+                    }
+                }
+                
+                updateProgress();
+                updateNavigation();
+            } catch (e) {
+                console.error('Error loading saved answers:', e);
+            }
+        }
+    }
+    
+    function showConfirmModal() {
+        let answeredCount = 0;
+        for (let i = 0; i < totalQuestions; i++) {
+            const questionCard = document.getElementById(`question-${i}`);
+            if (questionCard) {
+                const questionId = questionCard.dataset.questionId;
+                if (isQuestionAnswered(questionId)) {
+                    answeredCount++;
+                }
+            }
+        }
+        
+        document.getElementById('answeredStat').textContent = answeredCount;
+        document.getElementById('remainingStat').textContent = totalQuestions - answeredCount;
+        document.getElementById('confirmModal').style.display = 'block';
+    }
+    
+    function hideConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+    }
+    
+    function submitTest() {
+        hideConfirmModal();
+        
+        const submitBtn = document.getElementById('submitTest');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+        submitBtn.disabled = true;
+        
+        localStorage.removeItem(`test_${testId}_attempt_${attemptNumber}`);
+        
+        fetch(`/test/${testId}/submit/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                answers: userAnswers,
+                attempt_number: attemptNumber
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showResultModal(data);
+            } else {
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при отправке теста');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+    
+    function showResultModal(result) {
+        const resultContent = document.getElementById('resultContent');
+        
+        let html = `
+            <div class="result-content">
+                <div class="result-score-container">
+                    <div class="result-score">${result.score}</div>
+                    <div class="result-max-score">из ${result.max_score} баллов</div>
+                </div>
+                <div class="result-status ${result.passed ? 'status-passed' : 'status-failed'}">
+                    ${result.passed ? 'Тест сдан!' : 'Тест не сдан'}
+                </div>
+        `;
+        
+        if (result.passing_score) {
+            html += `<div class="result-message">Проходной балл: ${result.passing_score}</div>`;
+        }
+        
+        if (result.passed) {
+            html += `<div class="result-message">Поздравляем! Вы успешно прошли тест.</div>`;
+        } else {
+            html += `<div class="result-message">Попробуйте еще раз. У вас остались попытки.</div>`;
+        }
+        
+        html += `</div>`;
+        resultContent.innerHTML = html;
+        
+        document.getElementById('resultModal').style.display = 'block';
+    }
+    
+    function closeResultModal() {
+        document.getElementById('resultModal').style.display = 'none';
+    }
+    
+    window.addEventListener('click', function(event) {
+        const confirmModal = document.getElementById('confirmModal');
+        const resultModal = document.getElementById('resultModal');
+        
+        if (event.target === confirmModal) {
+            hideConfirmModal();
+        }
+        if (event.target === resultModal) {
+            closeResultModal();
+        }
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (Object.keys(userAnswers).length > 0) {
+            e.preventDefault();
+            e.returnValue = 'У вас есть несохраненные ответы. Вы уверены, что хотите покинуть страницу?';
+        }
+    });
+    
+    initTest();
+});
+</script>
+{% endblock %}

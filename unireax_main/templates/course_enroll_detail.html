@@ -1,0 +1,647 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block title_name %}UNIREAX - {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<section class="course-detail-section">
+    <div class="course-detail-container">
+        
+        {% if messages %}
+        <div class="enroll-messages-container">
+            {% for message in messages %}
+            <div class="enroll-message enroll-message-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="enroll-course-main">
+            <div class="enroll-course-image">
+                <img src="{{ course.course_photo_path.url }}" alt="{{ course.course_name }}">
+            </div>
+            
+            <div class="enroll-course-info">
+                <div class="enroll-course-header">
+                    <h1 class="enroll-course-title">{{ course.course_name }}</h1>
+                    <div class="enroll-course-actions">
+                        <div class="enroll-course-rating">
+                            <span>{{ rating|floatformat:1 }}</span>
+                            <img src="{% static 'icons/star.png' %}" alt="Рейтинг" style="width: 20px; height: 20px;">
+                        </div>
+                        {% if user.role.role_name == 'слушатель курсов' %}
+                        <button class="btn-favorite {% if course.is_favorite %}active{% endif %}" 
+                                data-course-id="{{ course.id }}"
+                                onclick="toggleCourseFavorite(this)"
+                                style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: all 0.3s ease; height: 70px; width: 70px;"
+                                id="favoriteButton">
+                            {% if course.is_favorite %}
+                                <img src="{% static 'icons/icon-heart.png' %}" alt="Удалить из избранного" style="width: 50px; height: 50px;">
+                            {% else %}
+                                <img src="{% static 'icons/icon-heart.png' %}" alt="Добавить в избранное" style="width: 50px; height: 50px; opacity: 0.7;">
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <p class="enroll-course-description">{{ course.course_description }}</p>
+
+                <div class="enroll-course-stats">
+                    <div class="enroll-stat-item">
+                        <p class="enroll-stat-label">Цена</p>
+                        <p class="enroll-stat-value">{% if course.course_price > 0 %}{{ course.course_price }} ₽{% else %}Бесплатный{% endif %}</p>
+                    </div>
+                    <div class="enroll-stat-item">
+                        <p class="enroll-stat-label">Часы</p>
+                        <p class="enroll-stat-value">{{ course.course_hours }}</p>
+                    </div>
+                    <div class="enroll-stat-item">
+                        <p class="enroll-stat-label">Сертификат</p>
+                        <p class="enroll-stat-value">{% if course.has_certificate %}Да{% else %}Нет{% endif %}</p>
+                    </div>
+                    <div class="enroll-stat-item">
+                        <p class="enroll-stat-label">Максимальное количество слушателей</p>
+                        <p class="enroll-stat-value">
+                            {% if course.course_max_places == 0 or course.course_max_places is None %}
+                                Неограниченное количество
+                            {% else %}
+                                {{ course.course_max_places }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="enroll-stat-item">
+                        <p class="enroll-stat-label">Записано слушателей на данный момент</p>
+                        <p class="enroll-stat-value">{{ students_in_course_count|default:"0" }}</p>
+                    </div>
+                    <div class="enroll-stat-item">
+                        {% if course.is_completed %}
+                        <div class="methodist-status-badge methodist-status-completed">
+                            <span class="methodist-icon methodist-icon-check"></span>
+                            Курс больше не пополняется новыми материалами
+                        </div>
+                        {% else %}
+                        <div class="methodist-status-badge methodist-status-progress">
+                            <span class="methodist-icon methodist-icon-update"></span>
+                            Пополняется новыми материалами
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="enroll-course-meta">
+                    <div class="enroll-meta-item">
+                        <p class="enroll-meta-label">Категория</p>
+                        <p class="enroll-meta-value">{{ course.course_category.course_category_name }}</p>
+                    </div>
+                    <div class="enroll-meta-item">
+                        <p class="enroll-meta-label">Тип</p>
+                        <p class="enroll-meta-value">{{ course.course_type.course_type_name }}</p>
+                    </div>
+                </div>
+                
+                <div class="enroll-action-container">
+                    {% if enrolled %}
+                        <div class="enroll-status-enrolled">
+                            <h3 class="enroll-status-title">Вы записаны на курс!</h3>
+                            <p class="enroll-status-progress">Ваш прогресс: {{ completion_percentage|floatformat:0 }}%</p>
+                            <a href="{% url 'course_study' course.id %}" class="enroll-btn-continue">
+                                {% if completion_percentage > 0 %}
+                                    Продолжить обучение
+                                {% else %}
+                                    Начать обучение
+                                {% endif %}
+                            </a>
+                        </div>
+                    {% elif was_enrolled_before %}
+                        <div class="enroll-status-previous">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Вы уже были записаны на этот курс ранее. При повторной записи ваш прогресс будет восстановлен.
+                            </div>
+                            
+                            {% if course.course_type.course_type_name == "Классная комната" %}
+                                <p class="enroll-action-note text-danger">
+                                    Вы не можете записаться на этот курс. Только преподаватель может самостоятельно зачислять слушателей.
+                                </p>
+                            {% else %}
+                                {% if course.course_price > 0 %}
+                                    {% if user.role.role_name == 'слушатель курсов' %}
+                                    <a href="{% url 'return_to_course' course.id %}" class="enroll-btn-payment">
+                                        Вернуться на курс
+                                    </a>
+                                    <p class="enroll-action-note">
+                                        Нажмите на кнопку, чтобы восстановить доступ к курсу и продолжить обучение
+                                    </p>
+                                    {% endif %}
+                                {% else %}
+                                    {% if user.role.role_name == 'слушатель курсов' %}
+                                    <a href="{% url 'return_to_course' course.id %}" class="enroll-btn-enroll">
+                                        Вернуться на курс
+                                    </a>
+                                    <p class="enroll-action-note">
+                                        Нажмите на кнопку, чтобы восстановить доступ к курсу и продолжить обучение
+                                    </p>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        {% if course.course_type.course_type_name == "Классная комната" %}
+                            <p class="enroll-action-note text-danger">
+                                Вы не можете записаться на этот курс. Только преподаватель может самостоятельно зачислять слушателей.
+                            </p>
+                        {% else %}
+                            {% if course.course_price > 0 %}
+                                {% if user.role.role_name == 'слушатель курсов' %}
+                                <a href="{% url 'create_payment' course.id %}" class="enroll-btn-payment">
+                                    Оплатить курс - {{ course.course_price }} ₽
+                                </a>
+                                <p class="enroll-action-note">
+                                    При нажатии на кнопку вы перенесетесь на страницу оплаты, после оплаты вы будете автоматически записаны на курс
+                                </p>
+                                {% endif %}
+                            {% else %}
+                                {% if user.role.role_name == 'слушатель курсов' %}
+                                <a href="{% url 'enroll_course' course.id %}" class="enroll-btn-enroll">
+                                    Записаться на курс
+                                </a>
+                                <p class="enroll-action-note">
+                                    Этот курс бесплатный, после нажатия на кнопку вы будете автоматически записаны на курс
+                                </p>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if not user.is_authenticated %}
+                        <div class="enroll-action-container">
+                            <a href="{% url 'auth'%}" class="enroll-btn-enroll">
+                                Авторизоваться
+                            </a>
+                            <p class="enroll-action-note">
+                                Авторизуйтесь в системе, чтобы {% if course.course_price > 0 %}оплачивать{% else %}записываться на{% endif %} курсы
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if teachers %}
+            <div class="enroll-section">
+                <h2 class="enroll-section-title">Преподаватели</h2>
+                <div class="enroll-teachers-grid">
+                    {% for teacher in teachers %}
+                        <div class="enroll-teacher-card">
+                            <h3 class="enroll-teacher-name">{{ teacher.teacher }}</h3>
+                            <p class="enroll-teacher-info">Преподает с {{ teacher.start_date }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if lectures %}
+            <div class="enroll-section">
+                <h2 class="enroll-section-title">Программа курса</h2>
+                <div class="enroll-lectures-list">
+                    {% for lecture in lectures %}
+                        <div class="enroll-lecture-card">
+                            <div class="enroll-lecture-header">
+                                <h3 class="enroll-lecture-title">{{ lecture.lecture_order }}. {{ lecture.lecture_name }}</h3>
+                                <span class="enroll-lecture-badge">Лекция</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if user.is_authenticated and enrolled and completion_percentage >= 50 %}
+            <div class="enroll-section">
+                <h2 class="enroll-section-title">Оставить отзыв</h2>
+                <form method="post" action="{% url 'submit_review' course.id %}" class="enroll-review-form">
+                    {% csrf_token %}
+                    <div class="enroll-review-rating">
+                        <label class="enroll-rating-label">Ваша оценка:</label>
+                        <div class="enroll-star-rating">
+                            {% for i in "12345" %}
+                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}">
+                                <label for="star{{ i }}">★</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="enroll-review-text">
+                        <label for="review_text" class="enroll-textarea-label">Текст отзыва (опционально):</label>
+                        <textarea id="review_text" name="review_text" rows="4" class="enroll-review-textarea"></textarea>
+                    </div>
+                    <button type="submit" class="enroll-submit-btn">Отправить отзыв</button>
+                </form>
+            </div>
+        {% elif user.is_authenticated and enrolled %}
+            <div class="enroll-progress-message">
+                <p class="enroll-no-reviews-text">
+                    Вы можете оставить отзыв после завершения 50% курса. 
+                    Ваш текущий прогресс: {{ completion_percentage|floatformat:0 }}%
+                </p>
+            </div>
+        {% endif %}
+        
+        <div class="enroll-section">
+            <h2 class="enroll-section-title">
+                Отзывы 
+                {% if reviews %}
+                    <span class="enroll-reviews-count">({{ reviews|length }})</span>
+                {% endif %}
+            </h2>
+            
+           {% if reviews %}
+            <div class="enroll-reviews-list">
+                {% for review in reviews %}
+                    <div class="enroll-review-card">
+                        <div class="enroll-review-header">
+                            <div>
+                                <h3 class="enroll-review-user">{{ review.user }}</h3>
+                                <p class="enroll-review-date">{{ review.publish_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div class="enroll-review-rating-display">
+                                <span>{{ review.rating }}</span>
+                                <span style="color: #FFD700;">★</span>
+                            </div>
+                        </div>
+                        <p class="enroll-review-text-content">{{ review.review_text }}</p>
+                        {% if review.comment_review %}
+                            <div class="enroll-review-comment">
+                                <p class="enroll-review-comment-text">Комментарий: {{ review.comment_review }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="enroll-no-reviews">
+                <p class="enroll-no-reviews-text">Отзывов пока нет.</p>
+
+                {% if user.is_authenticated %}
+                    <p class="enroll-no-reviews-text">Будьте первым, кто оставит отзыв!</p>
+                {% else %}
+                    <p class="enroll-no-reviews-text">Пожалуйста, <a href="{% url 'auth' %}">войдите в свой аккаунт</a>, чтобы оставить отзыв.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="hotkey-indicator" title="Нажмите Ctrl для показа/скрытия горячих клавиш">
+    Горячие клавиши - Ctrl
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.enroll-star-rating label');
+    
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            const rating = index + 1;
+            
+            stars.forEach(s => s.style.color = '#ddd');
+            
+            for (let i = 0; i < rating; i++) {
+                stars[i].style.color = '#FFD700';
+            }
+            
+            document.querySelector(`input[name="rating"][value="${rating}"]`).checked = true;
+        });
+    });
+
+    function initCourseHotkeys() {
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && !e.altKey && !e.shiftKey) {
+                e.preventDefault();
+                toggleHelp();
+                return;
+            }
+
+            if (e.altKey && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                window.location.href = "{% url 'catalog' %}";
+            }
+
+            if (e.altKey && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                const favoriteButton = document.getElementById('favoriteButton');
+                if (favoriteButton) {
+                    favoriteButton.click();
+                }
+            }
+
+            if (e.key === 'Escape' && isHelpVisible) {
+                e.preventDefault();
+                hideHelp();
+            }
+        });
+    }
+
+    let isHelpVisible = false;
+    let helpElement = null;
+
+    function createHelpElement() {
+        helpElement = document.createElement('div');
+        helpElement.className = 'hotkey-help';
+        helpElement.innerHTML = `
+            <div class="hotkey-header">
+                <span class="hotkey-title">Горячие клавиши курса</span>
+                <button class="hotkey-close" onclick="hideHelp()">×</button>
+            </div>
+            <div class="hotkey-content">
+                <div class="hotkey-group">
+                    <div class="hotkey-subtitle">Основные</div>
+                    <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>B</kbd> - Вернуться в каталог</div>
+                    <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>F</kbd> - Добавить в избранное</div>
+                </div>
+                <div class="hotkey-group">
+                    <div class="hotkey-subtitle">Управление</div>
+                    <div class="hotkey-item"><kbd>Ctrl</kbd> - Показать/скрыть справку</div>
+                    <div class="hotkey-item"><kbd>Esc</kbd> - Скрыть справку</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(helpElement);
+    }
+
+    window.toggleHelp = function() {
+        if (isHelpVisible) {
+            hideHelp();
+        } else {
+            showHelp();
+        }
+    }
+
+    window.showHelp = function() {
+        if (helpElement) {
+            helpElement.style.display = 'block';
+            isHelpVisible = true;
+        }
+    }
+
+    window.hideHelp = function() {
+        if (helpElement) {
+            helpElement.style.display = 'none';
+            isHelpVisible = false;
+        }
+    }
+
+    createHelpElement();
+    initCourseHotkeys();
+});
+</script>
+
+<style>
+    .hotkey-help {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border: 2px solid #650595ff;
+        border-radius: 15px;
+        padding: 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 10000;
+        max-width: 450px;
+        max-height: 80vh;
+        overflow-y: auto;
+        display: none;
+        color: white;
+        font-family: 'Arial Black', sans-serif;
+    }
+
+    .hotkey-header {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px 20px;
+        border-bottom: 1px solid #9115b0ff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hotkey-title {
+        font-weight: bold;
+        font-size: 18px;
+        color: #ecf0f1;
+    }
+
+    .hotkey-close {
+        background: none;
+        border: none;
+        color: #ecf0f1;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.3s;
+    }
+
+    .hotkey-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .hotkey-content {
+        padding: 20px;
+    }
+
+    .hotkey-group {
+        margin-bottom: 20px;
+    }
+
+    .hotkey-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .hotkey-subtitle {
+        font-weight: 600;
+        color: #ffffffff;
+        margin-bottom: 10px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .hotkey-item {
+        margin: 8px 0;
+        display: flex;
+        align-items: center;
+        color: #ecf0f1;
+        font-size: 14px;
+    }
+
+    kbd {
+        background: #1a252f;
+        border: 1px solid #39036bff;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-family: 'Courier New', monospace;
+        margin-right: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        min-width: 70px;
+        text-align: center;
+        display: inline-block;
+        color: #ffffffff;
+        font-weight: bold;
+    }
+
+    .hotkey-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #6521a9ff, #06427eff);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 25px;
+        font-size: 13px;
+        cursor: pointer;
+        z-index: 9999;
+        opacity: 0.9;
+        transition: all 0.3s ease;
+        font-family: 'Arial Black', sans-serif;
+        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hotkey-indicator:hover {
+        opacity: 1;
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
+    }
+
+    .btn-clear {
+        background: #95a5a6;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .btn-clear:hover {
+        background: #7f8c8d;
+    }
+
+    .hotkey-help::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: -1;
+    }
+
+    .enroll-btn-continue {
+        display: inline-block;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-family: 'Arial Black', sans-serif;
+        font-size: 1.1em;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+
+    .enroll-btn-continue:hover {
+        background: linear-gradient(135deg, #218838, #1e9e8a);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .enroll-status-previous {
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .alert-info {
+        background: rgba(23, 162, 184, 0.1);
+        border: 1px solid rgba(23, 162, 184, 0.3);
+        color: #0c5460;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .alert-info i {
+        color: #17a2b8;
+        margin-right: 10px;
+    }
+
+    .enroll-btn-enroll,
+    .enroll-btn-payment {
+        display: inline-block;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-family: 'Arial Black', sans-serif;
+        font-size: 1.1em;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .enroll-btn-payment {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .enroll-btn-enroll:hover,
+    .enroll-btn-payment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .enroll-btn-payment:hover {
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .enroll-action-note {
+        margin-top: 10px;
+        color: #6c757d;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+</style>
+{% endblock %}

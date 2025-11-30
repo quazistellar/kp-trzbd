@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+    {% if role_obj %}Редактирование роли{% else %}Создание роли{% endif %}
+{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">{% if role_obj %}Редактирование роли{% else %}Создание новой роли{% endif %}</h1>
+        
+        <div class="user-form-card">
+            <form method="post" class="user-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="user-form-error">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.role_name.label }} *</label>
+                    {{ form.role_name }}
+                    {% if form.role_name.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.role_name.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div class="user-form-help-text">
+                        Название роли должно быть уникальным
+                    </div>
+                </div>
+
+                <div class="user-form-actions">
+                    <button type="submit" class="user-form-submit">
+                        {% if role_obj %}Обновить{% else %}Создать{% endif %} роль
+                    </button>
+                    <a href="{% if role_obj %}{% url 'role_detail' role_obj.id %}{% else %}{% url 'role_list' %}{% endif %}" class="user-form-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

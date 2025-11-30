@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обратная связь - UNIREAX</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 3px solid #8c00ff;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px 12px 0 0;
+            margin: -20px -20px 30px -20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .message-container {
+            background: linear-gradient(135deg, #491892ff 0%, #311f6cff 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .message-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #340366;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #340366;
+            display: inline-block;
+            width: 80px;
+        }
+        .message-content {
+            background-color: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            line-height: 1.8;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 15px 0;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .warning {
+            color: #dc3545;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffe6e6;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .stars {
+            color: #ffd700;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">UNIREAX</div>
+            <h1>Новое сообщение от пользователя: {{ email }}</h1>
+        </div>
+        
+        <div class="message-container">
+            <p style="margin: 7px 0 0 0; opacity: 0.9; font-size:15px;">Поступило новое сообщение через форму обратной связи</p>
+        </div>
+        
+        <div class="user-info">
+            <div class="info-item">
+                <span class="info-label">Имя:</span>
+                <strong>{{ name }}</strong>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span>
+                <strong>{{ email }}</strong>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Дата:</span>
+                <strong>{{ date }}</strong>
+            </div>
+        </div>
+        
+        <h3 style="color: #340366; margin-bottom: 15px;">Сообщение пользователя:</h3>
+        <div class="message-content">
+            {{ message }}
+        </div>
+        
+        
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="mailto:{{ email }}" class="button">
+                ✉ Ответить пользователю
+            </a>
+        </div>
+        
+        <div class="warning">
+            Это письмо было отправлено автоматически через форму обратной связи на сайте UNIREAX.
+        </div>
+        
+        <div class="footer">
+            <p style="margin: 0 0 10px 0;">
+                <strong>С уважением,<br>Команда UNIREAX</strong>
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Образовательная платформа нового поколения
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Email для связи: unireax@mail.ru
+            </p>
+        </div>
+    </div>
+</body>
+</html>

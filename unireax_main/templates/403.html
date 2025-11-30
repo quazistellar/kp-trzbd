@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Доступ запрещен - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="error-section">
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-decoration">
+                <div class="error-icon">
+                    <i class="fas fa-ban"></i>
+                </div>
+            </div>
+
+            <div class="error-main">
+                <h1 class="error-code">403</h1>
+                <h2 class="error-title">Доступ запрещен</h2>
+                <p class="error-description">
+                    У вас недостаточно прав для просмотра этой страницы.
+                </p>
+
+                <div class="access-info">
+                    <div class="info-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="info-content">
+                            <h4>Требуемые права</h4>
+                            <p>Для доступа к этому разделу необходимы права администратора или суперпользователя.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-actions">
+                    <a href="{% url 'profile' %}" class="study-btn study-btn-primary">
+                        <i class="fas fa-home"></i>
+                        Вернуться в кабинет
+                    </a>
+                    <a href="{% url 'course_list' %}" class="study-btn study-btn-outline">
+                        <i class="fas fa-book"></i>
+                        К курсам
+                    </a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="study-btn study-btn-outline">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Войти в систему
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if user.is_superuser or user.role.role_name == 'администратор' %}
+                <div class="tech-info">
+                    <h4>Техническая информация:</h4>
+                    <p><strong>Путь:</strong> {{ request.path }}</p>
+                    <p><strong>Метод:</strong> {{ request.method }}</p>
+                    <p><strong>Пользователь:</strong> {{ user.username }}</p>
+                    <p><strong>Роль:</strong> {{ user.role.role_name }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.error-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: transparent;
+}
+
+.error-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.error-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.error-decoration {
+    text-align: center;
+}
+
+.error-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.error-icon i {
+    font-size: 3em;
+    color: white;
+}
+
+.error-main {
+    text-align: center;
+}
+
+.error-code {
+    font-family: "Arial Black", sans-serif;
+    font-size: 6em;
+    color: #ff6b6b;
+    margin: 0 0 10px 0;
+    line-height: 1;
+}
+
+.error-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #FFFFFF;
+    margin: 0 0 20px 0;
+}
+
+.error-description {
+    font-size: 1.2em;
+    color: #BFC3F7;
+    margin: 0 0 40px 0;
+    line-height: 1.6;
+}
+
+.access-info {
+    margin: 40px 0;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 25px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    text-align: left;
+}
+
+.info-card i {
+    font-size: 1.5em;
+    color: #ff6b6b;
+    margin-top: 5px;
+}
+
+.info-content h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.info-content p {
+    color: #BFC3F7;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.error-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 40px 0;
+}
+
+.study-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.study-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.study-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.tech-info {
+    margin-top: 40px;
+    padding: 25px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    text-align: left;
+}
+
+.tech-info h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.tech-info p {
+    color: #BFC3F7;
+    margin: 8px 0;
+    font-size: 0.9em;
+}
+
+.tech-info strong {
+    color: #A020F0;
+}
+
+@media (max-width: 768px) {
+    .error-code {
+        font-size: 4em;
+    }
+    
+    .error-title {
+        font-size: 1.5em;
+    }
+    
+    .error-description {
+        font-size: 1.1em;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .study-btn {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+    
+    .info-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .error-section {
+        padding: 20px 15px;
+    }
+    
+    .error-code {
+        font-size: 3em;
+    }
+    
+    .error-icon {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .error-icon i {
+        font-size: 2.5em;
+    }
+}
+
+.study-btn,
+.info-card,
+.tech-info {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.study-btn:hover,
+.study-btn-outline:hover {
+    transform: none !important;
+}
+
+.error-title,
+.error-code {
+    text-shadow: none !important;
+}
+
+.error-section,
+.error-container {
+    background: transparent !important;
+}
+
+.info-card,
+.tech-info {
+    background: rgba(21, 29, 73, 0.95) !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(123, 127, 213, 0.3) !important;
+}
+</style>
+{% endblock %}

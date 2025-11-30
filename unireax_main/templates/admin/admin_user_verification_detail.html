@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Подробная информация о пользователе{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о пользователе</h1>
+        
+        <div class="user-detail-card">
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                  <p><strong>ФИО:</strong> 
+                        {{ user_obj.last_name }} {{ user_obj.first_name }}
+                        {% if user_obj.patronymic %}{{ user_obj.patronymic }}{% else %}-{% endif %}
+                    </p>
+                    <p><strong>Email:</strong> {{ user_obj.email }}</p>
+                    <p><strong>Желаемая роль:</strong> 
+                        <span class="user-role-badge user-role-{{ user_obj.role.role_name|slugify }}">
+                            {{ user_obj.role.role_name }}
+                        </span>
+                    </p>
+                    <p><strong>Статус:</strong> 
+                        {% if user_obj.is_verified %}
+                            <span class="user-status-verified">Подтверждён</span>
+                        {% else %}
+                            <span class="user-status-pending">Ожидает подтверждения</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Дата регистрации:</strong> {{ user_obj.date_joined|date:'d.m.Y H:i' }}</p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Профессиональная информация</h3>
+                    <p><strong>Должность:</strong> {{ user_obj.position|default:"Не указана" }}</p>
+                    <p><strong>Учебное заведение:</strong> {{ user_obj.educational_institution|default:"Не указано" }}</p>
+                </div>
+                
+                {% if user_obj.certificat_from_the_place_of_work_path %}
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Документы</h3>
+                    <p><strong>Справка с места работы/документ об образовании:</strong></p>
+                    <div class="user-document-preview">
+                        <a href="{{ user_obj.certificat_from_the_place_of_work_path.url }}" 
+                           target="_blank" 
+                           class="user-document-link">
+                            Просмотреть документ
+                        </a>
+                        <small class="user-document-info">
+                            Формат: {{ user_obj.certificat_from_the_place_of_work_path.name|slice:'-3:'|upper }}
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if not user_obj.is_verified %}
+        <div class="user-verification-actions">
+            <h2 class="users-title">Подтверждение доступа</h2>
+            
+            <div class="user-verification-card">
+                <form method="post" class="user-verification-form">
+                    {% csrf_token %}
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">Комментарий (необязательно)</label>
+                        <textarea name="comment" class="user-form-textarea" 
+                                  placeholder="Можете оставить комментарий для пользователя, например, что нужно исправить в регистрационных данных..."></textarea>
+                        <div class="user-form-help-text">
+                            Этот комментарий будет отправлен пользователю на его почту, которую он указал при регистрации.
+                        </div>
+                    </div>
+
+                    <div class="user-verification-buttons">
+                        <button type="submit" name="action" value="approve" class="user-verification-approve">
+                            Подтвердить доступ
+                        </button>
+                        <button type="submit" name="action" value="reject" class="user-verification-reject">
+                            Отклонить доступ
+                        </button>
+                        <a href="{% url 'admin_user_verification_list' %}" class="user-form-cancel">
+                            Назад к списку
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="user-detail-actions">
+            <div class="user-status-already-verified">
+                <p>✅ Аккаунт пользователя уже подтвержден</p>
+            </div>
+            <a href="{% url 'admin_user_verification_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

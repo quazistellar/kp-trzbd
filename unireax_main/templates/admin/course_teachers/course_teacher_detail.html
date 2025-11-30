@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Назначение преподавателя на курс{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о назначении преподавателя</h1>
+        
+        <div class="user-detail-card">
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                    <p><strong>ID:</strong> {{ course_teacher_obj.id }}</p>
+                    <p><strong>Преподаватель:</strong> 
+                        {{ course_teacher_obj.teacher.last_name }} {{ course_teacher_obj.teacher.first_name }}
+                        {% if course_teacher_obj.teacher.patronymic %}{{ course_teacher_obj.teacher.patronymic }}{% endif %}
+                    </p>
+                    <p><strong>Email:</strong> {{ course_teacher_obj.teacher.email }}</p>
+                    <p><strong>Должность:</strong> {{ course_teacher_obj.teacher.position|default:"Не указана" }}</p>
+                    <p><strong>Учебное заведение:</strong> {{ course_teacher_obj.teacher.educational_institution|default:"Не указано" }}</p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Информация о курсе</h3>
+                    <p><strong>Курс:</strong> {{ course_teacher_obj.course.course_name }}</p>
+                    <p><strong>Категория:</strong> {{ course_teacher_obj.course.course_category.course_category_name }}</p>
+                    <p><strong>Тип курса:</strong> {{ course_teacher_obj.course.course_type.course_type_name }}</p>
+                    <p><strong>Количество часов:</strong> {{ course_teacher_obj.course.course_hours }}</p>
+                    <p><strong>Цена:</strong> 
+                        {% if course_teacher_obj.course.course_price %}
+                            {{ course_teacher_obj.course.course_price }} ₽
+                        {% else %}
+                            Бесплатно
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Статусы и даты</h3>
+                    <p><strong>Дата начала:</strong> {{ course_teacher_obj.start_date|date:'d.m.Y' }}</p>
+                    <p><strong>Статус назначения:</strong> 
+                        {% if course_teacher_obj.is_active %}
+                            <span class="user-status-active">Активен</span>
+                        {% else %}
+                            <span class="user-status-inactive">Неактивен</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Статус курса:</strong> 
+                        {% if course_teacher_obj.course.is_active %}
+                            <span class="user-status-active">Активен</span>
+                        {% else %}
+                            <span class="user-status-inactive">Неактивен</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Завершён:</strong> 
+                        {% if course_teacher_obj.course.is_completed %}
+                            <span class="user-status-verified">Да</span>
+                        {% else %}
+                            <span class="user-status-pending">Нет</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-detail-actions">
+            <a href="{% url 'create_update_course_teacher' course_teacher_obj.id %}" class="user-action-edit">Редактировать назначение</a>
+            <a href="{% url 'delete_course_teacher' course_teacher_obj.id %}" class="user-action-delete">Удалить назначение</a>
+            <a href="{% url 'course_teacher_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

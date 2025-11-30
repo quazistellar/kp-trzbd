@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Дашборд методиста{% endblock %}
+
+{% block content %}
+<section class="methodist-panel">
+    <div class="methodist-container">
+        <div class="methodist-header">
+            <div>
+                <h1 class="methodist-title">Дашборд методиста</h1>
+                <p class="methodist-subtitle">Добро пожаловать, {{ request.user.get_full_name }}!</p>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="methodist-messages">
+            {% for message in messages %}
+            <div class="methodist-message {% if message.tags %}methodist-message-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="methodist-dashboard-stats">
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ courses.count }}</div>
+                    <div class="methodist-stat-label">Мои курсы</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ total_lectures }}</div>
+                    <div class="methodist-stat-label">Лекций всего</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ total_tests }}</div>
+                    <div class="methodist-stat-label">Тестов всего</div>
+                </div>
+            </div>
+            <div class="methodist-stat-card">
+                <div class="methodist-stat-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="methodist-stat-info">
+                    <div class="methodist-stat-number">{{ total_assignments }}</div>
+                    <div class="methodist-stat-label">Заданий всего</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="methodist-card">
+            <div class="methodist-section-header">
+                <h2 class="methodist-text-view">Мои курсы</h2>
+                <a href="{% url 'methodist_create_course' %}" class="methodist-btn methodist-btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Создать курс
+                </a>
+            </div>
+
+            {% if courses %}
+            <div class="methodist-courses-grid">
+                {% for course in courses %}
+                <div class="methodist-course-card">
+                    <div class="methodist-course-header">
+                        <h3>{{ course.course_name }}</h3>
+                        <span class="methodist-course-status {% if course.is_active %}active{% else %}inactive{% endif %}">
+                            {% if course.is_active %}Активен{% else %}Неактивен{% endif %}
+                        </span>
+                    </div>
+                    <div class="methodist-course-info">
+                        <p class="methodist-course-description">{{ course.course_description|truncatewords:20 }}</p>
+                        <div class="methodist-course-meta">
+                            <span><i class="fas fa-clock"></i> {{ course.course_hours }} часов</span>
+                            <span><i class="fas fa-users"></i> {{ course.course_price|default:"Бесплатно" }} руб.</span>
+                            <span><i class="fas fa-chart-bar"></i> {{ course.course_max_places|default:"∞" }} мест</span>
+                        </div>
+                    </div>
+                    <div class="methodist-course-actions">
+                        <a href="{% url 'methodist_course_constructor' course.id %}" class="methodist-btn methodist-btn-primary">
+                            <i class="fas fa-edit"></i>
+                            Конструктор
+                        </a>
+                        <a href="{% url 'methodist_course_settings' course.id %}" class="methodist-btn methodist-btn-outline">
+                            <i class="fas fa-cog"></i>
+                            Настройки
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="methodist-empty-state">
+                <i class="fas fa-book-open methodist-empty-icon"></i>
+                <h3>У вас пока нет курсов</h3>
+                <p class="methodist-empty-hint">Создайте свой первый курс чтобы начать работу</p>
+                <a href="{% url 'methodist_create_course' %}" class="methodist-btn methodist-btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Создать курс
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+       
+    </div>
+</section>
+{% endblock %}

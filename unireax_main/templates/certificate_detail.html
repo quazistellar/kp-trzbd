@@ -1,0 +1,584 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Сертификат - {{ certificate.certificate_number }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="certificate-detail-section">
+    <div class="certificate-detail-container">
+        <div class="certificate-header-section">
+            <div class="certificate-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'my_certificates' %}">Мои сертификаты</a>
+                <span class="breadcrumb-separator">/</span>
+                <span style="color: white;">Сертификат</span>
+            </div>
+            
+            <div class="certificate-title-section">
+                <h1 class="certificate-title">Сертификат о завершении курса</h1>
+                <p class="certificate-subtitle">№ {{ certificate.certificate_number }}</p>
+            </div>
+        </div>
+
+        <div class="certificate-content">
+            <div class="certificate-info-card">
+                <div class="certificate-info-header">
+                    <h3>Информация о сертификате</h3>
+                    <div class="certificate-actions">
+                        <a href="{% url 'download_certificate' certificate.id %}" class="btn btn-primary">
+                            Скачать PDF
+                        </a>
+                        <a href="{% url 'my_certificates' %}" class="btn btn-outline">
+                            ← Все сертификаты
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="certificate-details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Слушатель:</span>
+                        <span class="detail-value">
+                            {{ certificate.user_course.user.last_name }} 
+                            {{ certificate.user_course.user.first_name }}
+                            {% if certificate.user_course.user.patronymic %}
+                            {{ certificate.user_course.user.patronymic }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Курс:</span>
+                        <span class="detail-value">{{ certificate.user_course.course.course_name }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Дата выдачи:</span>
+                        <span class="detail-value">{{ certificate.issue_date|date:"d.m.Y" }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Продолжительность:</span>
+                        <span class="detail-value">{{ certificate.user_course.course.course_hours }} часов</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Статус:</span>
+                        <span class="detail-value status-active">Действителен</span>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="certificate-preview-card">
+                <h3>Предпросмотр сертификата</h3>
+                <div class="certificate-preview">
+                    <div class="certificate-design">
+                        <div class="certificate-border">
+                            <div class="certificate-content-preview">
+                                <div class="certificate-logo">UNIREAX</div>
+                                <div class="certificate-title-preview">СЕРТИФИКАТ</div>
+                                
+                                <div class="certificate-text">
+                                    Настоящим удостоверяется, что
+                                </div>
+                                
+                                <div class="certificate-student-name">
+                                    {{ certificate.user_course.user.last_name }} 
+                                    {{ certificate.user_course.user.first_name }}
+                                    {% if certificate.user_course.user.patronymic %}
+                                    {{ certificate.user_course.user.patronymic }}
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="certificate-text">
+                                    успешно завершил(а) курс
+                                </div>
+                                
+                                <div class="certificate-course-name">
+                                    {{ certificate.user_course.course.course_name|upper }}
+                                </div>
+                                
+                                <div class="certificate-details">
+                                    Продолжительность: {{ certificate.user_course.course.course_hours }} часов
+                                </div>
+                                
+                                <div class="certificate-date">
+                                    Дата выдачи: {{ certificate.issue_date|date:"d.m.Y" }}
+                                </div>
+                                
+                                <div class="certificate-number">
+                                    № {{ certificate.certificate_number }}
+                                </div>
+                                
+                                <div class="certificate-signatures">
+                                    <div class="signature-center">
+                                        {% with signature_path='images/write.png' %}
+                                        {% static signature_path as signature_static_path %}
+                                        {% if signature_static_path %}
+                                            <div class="signature-image-container">
+                                                <img src="{% static 'images/write.png' %}" alt="Подпись директора" class="signature-image">
+                                                <div class="signature-line"></div>
+                                            </div>
+                                        {% else %}
+                                            <div class="signature-line-full"></div>
+                                        {% endif %}
+                                        {% endwith %}
+                                        <div class="signature-title">Директор UNIREAX</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-actions">
+                    <p class="preview-note">
+                        Это предпросмотр. Для получения официального документа скачайте PDF-версию.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+body {
+    background-color: #7B7FD5 !important;
+}
+
+.certificate-detail-section {
+    padding: 30px 0;
+    min-height: 100vh;
+}
+
+.certificate-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.certificate-header-section {
+    margin-bottom: 40px;
+}
+
+.certificate-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.certificate-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.certificate-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.certificate-title-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.certificate-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.2em;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.certificate-subtitle {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.certificate-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.certificate-info-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.certificate-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.certificate-info-header h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.certificate-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+.btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+}
+
+.certificate-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.detail-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.detail-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.95em;
+    font-weight: bold;
+    text-align: right;
+}
+
+.status-active {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.2);
+    padding: 4px 12px;
+    border-radius: 15px;
+    border: 1px solid #28a745;
+}
+
+.certificate-preview-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.certificate-preview-card h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 25px 0;
+    font-size: 1.4em;
+}
+
+.certificate-preview {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.certificate-design {
+    background: linear-gradient(135deg, #f8f9ff, #e8f4ff);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 100%;
+}
+
+.certificate-border {
+    border: 3px solid #7B7FD5;
+    border-radius: 8px;
+    padding: 50px 40px;
+    position: relative;
+    background: white;
+}
+
+.certificate-content-preview {
+    text-align: center;
+    color: #2c3e50;
+}
+
+.certificate-logo {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.5em;
+    color: #7B7FD5;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+}
+
+.certificate-title-preview {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #2c3e50;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.certificate-text {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.certificate-student-name {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.8em;
+    color: #7B7FD5;
+    margin: 30px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.certificate-course-name {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.4em;
+    color: #2c3e50;
+    margin: 30px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.certificate-details {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #666;
+    margin: 20px 0;
+}
+
+.certificate-date {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #666;
+    margin: 20px 0 40px 0;
+}
+
+.certificate-number {
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 40px;
+}
+
+.certificate-signatures {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.signature-center {
+    text-align: center;
+}
+
+.signature-image-container {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.signature-image {
+    width: 200px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.signature-line {
+    width: 300px;
+    height: 2px;
+    background: #333;
+    margin: 0 auto;
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.signature-line-full {
+    width: 300px;
+    height: 2px;
+    background: #333;
+    margin: 0 auto 15px;
+}
+
+.signature-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #333;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.preview-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.preview-note {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    margin: 0;
+    padding: 15px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+@media (max-width: 768px) {
+    .certificate-info-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .certificate-actions {
+        justify-content: center;
+    }
+    
+    .certificate-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .certificate-design {
+        padding: 20px;
+    }
+    
+    .certificate-border {
+        padding: 30px 20px;
+    }
+    
+    .certificate-signatures {
+        margin-top: 40px;
+    }
+    
+    .signature-image {
+        width: 250px;
+        height: 65px;
+    }
+    
+    .signature-line,
+    .signature-line-full {
+        width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .certificate-detail-container {
+        padding: 0 15px;
+    }
+    
+    .certificate-title {
+        font-size: 1.8em;
+    }
+    
+    .certificate-info-card,
+    .certificate-preview-card {
+        padding: 20px;
+    }
+    
+    .certificate-logo {
+        font-size: 2em;
+    }
+    
+    .certificate-title-preview {
+        font-size: 1.6em;
+    }
+    
+    .certificate-student-name {
+        font-size: 1.4em;
+    }
+    
+    .signature-image {
+        width: 200px;
+        height: 50px;
+    }
+    
+    .signature-line,
+    .signature-line-full {
+        width: 200px;
+    }
+}
+
+body.dark-theme .certificate-title-section,
+body.dark-theme .certificate-info-card,
+body.dark-theme .certificate-preview-card {
+    background: rgba(26, 31, 46, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .detail-item {
+    background: rgba(99, 102, 241, 0.1);
+}
+</style>
+{% endblock %}

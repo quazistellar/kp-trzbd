@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+    {% if user_obj %}Редактирование пользователя{% else %}Создание пользователя{% endif %}
+{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">{% if user_obj %}Редактирование пользователя{% else %}Создание нового пользователя{% endif %}</h1>
+        
+        <div class="user-form-card">
+            <form method="post" class="user-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="user-form-error">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.last_name.label }} *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.last_name.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.first_name.label }} *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.first_name.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.patronymic.label }}</label>
+                    {{ form.patronymic }}
+                    {% if form.patronymic.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.patronymic.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.email.label }} *</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.email.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.username.label }} *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.username.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if not user_obj %}
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.password1.label }} *</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.password1.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.password2.label }} *</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.password2.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.role.label }} *</label>
+                        {{ form.role }}
+                        {% if form.role.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.role.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.profile_theme.label }}</label>
+                        {{ form.profile_theme }}
+                    </div>
+                </div>
+                
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.position.label }}</label>
+                    {{ form.position }}
+                </div>
+                
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.educational_institution.label }}</label>
+                    {{ form.educational_institution }}
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.certificat_from_the_place_of_work_path.label }}</label>
+                    {{ form.certificat_from_the_place_of_work_path }}
+                    <div class="user-form-help-text">
+                        Допустимые форматы: JPG, PNG, PDF. Максимальный размер: 10 МБ
+                    </div>
+                    {% if form.certificat_from_the_place_of_work_path.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.certificat_from_the_place_of_work_path.errors.0 }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if user_obj and user_obj.certificat_from_the_place_of_work_path %}
+                    <div class="current-file-info">
+                        <strong>Текущий файл:</strong>
+                        <a href="{{ user_obj.certificat_from_the_place_of_work_path.url }}" 
+                           target="_blank" 
+                           class="file-link">
+                            📎 Посмотреть справку
+                        </a>
+                        <label class="user-form-checkbox-label remove-file-label">
+                            <input type="checkbox" name="certificat_from_the_place_of_work_path-clear">
+                            <span class="user-form-checkbox-custom"></span>
+                            Удалить текущий файл
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="user-form-checkboxes">
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_verified }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Подтверждённый пользователь
+                    </label>
+                    
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_active }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Активный пользователь
+                    </label>
+
+                    {% if user_obj %}
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_staff }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Статус персонала
+                    </label>
+
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_superuser }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Суперпользователь
+                    </label>
+                    {% endif %}
+                </div>
+
+                <div class="user-form-actions">
+                    <button type="submit" class="user-form-submit">
+                        {% if user_obj %}Обновить{% else %}Создать{% endif %} пользователя
+                    </button>
+                    <a href="{% url 'user_list' %}" class="user-form-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

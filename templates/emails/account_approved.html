@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение аккаунта - UNIREAX</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 3px solid #8c00ff;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px 12px 0 0;
+            margin: -20px -20px 30px -20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .success-container {
+            background: linear-gradient(135deg, #491892ff 0%, #311f6cff 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #340366;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #340366;
+            display: inline-block;
+            width: 150px;
+        }
+        .comment-box {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 35px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 25px 0;
+            font-weight: bold;
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">UNIREAX</div>
+            <h1>Ваш аккаунт подтвержден!</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0;">Добро пожаловать в нашу образовательную платформу!</p>
+        </div>
+        
+      
+
+        <p>Здравствуйте, <strong>{{ user_obj.last_name }} {{ user_obj.first_name }}{% if user_obj.patronymic %} {{ user_obj.patronymic }}{% endif %}</strong>!</p>
+        
+        <div class="user-info">
+            <div class="info-item">
+                <span class="info-label">Ваша роль:</span>
+                <strong>{{ user_obj.role.role_name }}</strong>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email для входа:</span>
+                <strong>{{ user_obj.email }}</strong>
+            </div>
+        </div>
+        
+        <p>Мы рады сообщить, что ваша регистрация на нашей платформе успешно подтверждена администрацией.</p>
+        
+        {% if admin_comment %}
+        <div class="comment-box">
+            <strong>💬 Комментарий администратора:</strong>
+            <p style="margin: 10px 0 0 0;">{{ admin_comment }}</p>
+        </div>
+        {% endif %}
+        
+        <p>Теперь вы можете войти в систему и начать работу, надеемся, что наше сотрудничество будет интересным и продуктивным!</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ site_url }}/auth" class="button">Войти в систему</a>
+        </div>
+        
+        <p>Если у вас возникнут вопросы или потребуется помощь, не стесняйтесь обращаться в нашу службу поддержки по адресу unireax@mail.ru</p>
+        
+        <div class="footer">
+            <p style="margin: 0 0 10px 0;">
+                <strong>С уважением,<br>Команда UNIREAX</strong>
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Образовательная платформа нового поколения
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Это письмо отправлено автоматически. Пожалуйста, не отвечайте на него.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

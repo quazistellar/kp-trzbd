@@ -1,0 +1,1345 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Сдача работы: {{ assignment.practical_assignment_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="practical-submit-section">
+    <div class="practical-submit-container">
+        <div class="practical-header-section">
+            <div class="practical-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'course_study' assignment.lecture.course.id %}">{{ assignment.lecture.course.course_name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>Сдача работы</span>
+            </div>
+            
+            <div class="practical-title-section">
+                <h1 class="practical-title">{{ assignment.practical_assignment_name }}</h1>
+                <div class="practical-meta-info">
+                    <div class="practical-meta">
+                        <span class="practical-lecture">Лекция {{ assignment.lecture.lecture_order }}</span>
+                        {% if assignment.assignment_deadline %}
+                        <span class="practical-deadline {% if assignment.assignment_deadline < current_time %}deadline-passed{% endif %}">
+                            Срок сдачи: {{ assignment.assignment_deadline|date:"d.m.Y H:i" }}
+                        </span>
+                        {% endif %}
+                        <span class="practical-type">{{ assignment.get_grading_type_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="practical-content">
+            <aside class="practical-sidebar">
+                <div class="assignment-info-card">
+                    <h3>Информация о задании</h3>
+                    <div class="assignment-info-list">
+                        <div class="info-item">
+                            <span class="info-label">Лекция:</span>
+                            <span class="info-value">{{ assignment.lecture.lecture_order }}. {{ assignment.lecture.lecture_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Тип оценки:</span>
+                            <span class="info-value">{{ assignment.get_grading_type_display }}</span>
+                        </div>
+                        {% if assignment.max_score %}
+                        <div class="info-item">
+                            <span class="info-label">Макс. балл:</span>
+                            <span class="info-value">{{ assignment.max_score }}</span>
+                        </div>
+                        {% endif %}
+                          {% if assignment.max_score %}
+                        <div class="info-item">
+                            <span class="info-label">Для того, чтобы работа считалась успешно сданной вам надо получить не менее половины баллов от числа максимального балла, например работа оценивается в 30 максимальных баллов, значит вам следует получить минимум 15 баллов за неё</span>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <span class="info-label">Статус задания:</span>
+                            <span class="info-value {% if assignment.assignment_deadline and assignment.assignment_deadline < current_time %}status-overdue{% else %}status-active{% endif %}">
+                                {% if assignment.assignment_deadline and assignment.assignment_deadline < current_time %}Просрочено{% else %}Активно{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if assignment.assignment_document_path %}
+                <div class="materials-card">
+                    <h3>Материалы</h3>
+                    <a href="{{ assignment.assignment_document_path.url }}" class="download-link" target="_blank">
+                        <i class="fas fa-download"></i>
+                        Скачать задание
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="submission-rules">
+                    <h3>Правила сдачи</h3>
+                    <ul>
+                        <li>Поддерживаемые форматы: PDF, DOC, DOCX, ZIP</li>
+                        <li>Максимальный размер: 50 МБ</li>
+                        <li>Проверка занимает до 3 рабочих дней</li>
+                        <li>Можно прикрепить до 10 файлов</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <section class="practical-main">
+                <div class="assignment-content">
+                    <div class="description-section">
+                        <h2>Описание задания</h2>
+                        <div class="description-content">
+                            {{ assignment.practical_assignment_description|linebreaks }}
+                        </div>
+                    </div>
+
+                    {% if assignment.assignment_criteria %}
+                    <div class="criteria-section">
+                        <h2>Критерии оценки</h2>
+                        <div class="criteria-content">
+                            {{ assignment.assignment_criteria|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user_assignment %}
+                                    <div class="submission-status-section">
+                    <h2>Статус сдачи</h2>
+                    
+                    <div class="status-card {% if user_assignment.submission_status.assignment_status_name == 'завершено' or user_assignment.submission_status.assignment_status_name == 'завершен' %}{% if is_passed %}status-completed{% else %}status-rejected{% endif %}{% elif user_assignment.submission_status.assignment_status_name == 'на доработке' %}status-revision{% elif user_assignment.submission_status.assignment_status_name == 'отклонено' %}status-rejected{% elif user_assignment.submission_status.assignment_status_name == 'на проверке' %}status-checking{% else %}status-checking{% endif %}">
+                        <div class="status-header">
+                            <h3 class="status-title">
+                                {% if user_assignment.submission_status.assignment_status_name == 'завершено' or user_assignment.submission_status.assignment_status_name == 'завершен' %}
+                                    {% if is_passed %}
+                                        ✅ Работа сдана!
+                                    {% else %}
+                                        ❌ Работа не сдана
+                                    {% endif %}
+                                {% elif user_assignment.submission_status.assignment_status_name == 'на проверке' %}
+                                    Работа на проверке
+                                {% elif user_assignment.submission_status.assignment_status_name == 'на доработке' %}
+                                    Требуется доработка
+                                {% elif user_assignment.submission_status.assignment_status_name == 'отклонено' %}
+                                    Работа отклонена
+                                {% elif user_assignment.submission_status.assignment_status_name == 'просрочено' %}
+                                    Срок сдачи истек
+                                {% else %}
+                                    Работа не сдана
+                                {% endif %}
+                            </h3>
+                            <span class="attempt-number">Попытка {{ user_assignment.attempt_number }}</span>
+                        </div>
+                        
+                        <div class="status-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Дата сдачи:</span>
+                                <span class="detail-value">
+                                    {% if user_assignment.submission_date %}
+                                        {{ user_assignment.submission_date|date:"d.m.Y H:i" }}
+                                    {% else %}
+                                        Не отправлено
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Статус:</span>
+                                <span class="detail-value status-badge">{{ user_assignment.submission_status.assignment_status_name }}</span>
+                            </div>
+                            
+                            {% if user_assignment.submission_status.assignment_status_name == 'завершено' or user_assignment.submission_status.assignment_status_name == 'завершен' %}
+                            <div class="detail-item">
+                                <span class="detail-label">Результат:</span>
+                                <span class="detail-value {% if is_passed %}result-passed{% else %}result-failed{% endif %}">
+                                    {% if assignment.grading_type == 'points' and feedback.score is not None %}
+                                        {{ feedback.score }}/{{ assignment.max_score }} баллов 
+                                        {% if percentage %}({{ percentage|floatformat:1 }}%){% endif %}
+                                        - {% if is_passed %}Сдано{% else %}Не сдано{% endif %}
+                                    {% else %}
+                                        {% if is_passed %}✅ Сдано{% else %}❌ Не сдано{% endif %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            {% if assignment.grading_type == 'points' and min_score %}
+                            <div class="detail-item">
+                                <span class="detail-label">Минимальный порог:</span>
+                                <span class="detail-value">
+                                    ≥ {{ min_score|floatformat:0 }} баллов (50%)
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                            
+                            {% if user_assignment.comment %}
+                            <div class="detail-item">
+                                <span class="detail-label">Ваш комментарий:</span>
+                                <span class="detail-value">{{ user_assignment.comment }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if user_assignment.assignment_submission_files %}
+                    <div class="submitted-files-section">
+                        <h3>Загруженные файлы</h3>
+                        <div class="files-grid">
+                            {% for file in user_assignment.assignment_submission_files.all %}
+                            <div class="file-card">
+                                <div class="file-icon">
+                                    {% if file.file_name|lower|slice:"-4:" == '.pdf' %}
+                                    📄
+                                    {% elif file.file_name|lower|slice:"-4:" == '.doc' or file.file_name|lower|slice:"-5:" == '.docx' %}
+                                    📝
+                                    {% elif file.file_name|lower|slice:"-4:" == '.zip' %}
+                                    📦
+                                    {% else %}
+                                    📎
+                                    {% endif %}
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">{{ file.file_name }}</div>
+                                    <div class="file-meta">
+                                        <span class="file-size">{{ file.file_size|filesizeformat }}</span>
+                                        <span class="file-date">{{ file.uploaded_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <a href="{{ file.file.url }}" class="btn-download" download target="_blank">Скачать</a>
+                                    <a href="{{ file.file.url }}" class="btn-view" target="_blank">Открыть</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if feedback %}
+                    <div class="feedback-section">
+                        <h3>Обратная связь от преподавателя</h3>
+                        <div class="feedback-card">
+                            <div class="feedback-header">
+                                {% if assignment.grading_type == 'points' %}
+                                <div class="score-display">
+                                    <span class="score-value">{{ feedback.score }}</span>
+                                    <span class="score-max">/ {{ assignment.max_score }}</span>
+                                </div>
+                                {% else %}
+                                <div class="pass-status {% if feedback.is_passed %}passed{% else %}failed{% endif %}">
+                                    {{ feedback.is_passed|yesno:"Зачёт,Незачёт" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if feedback.comment_feedback %}
+                            <div class="feedback-comment">
+                                <h4>Комментарий преподавателя:</h4>
+                                <p>{{ feedback.comment_feedback|linebreaks }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if user_assignment.submission_status.assignment_status_name == 'на доработке' or user_assignment.submission_status.assignment_status_name == 'отклонено' %}
+                            <div class="resubmit-section">
+                                <p class="resubmit-notice">Вы можете отправить работу повторно с исправлениями.</p>
+                                <button type="button" class="study-btn study-btn-primary" onclick="scrollToSubmitForm()">
+                                    <i class="fas fa-upload"></i>
+                                    Пересдать работу
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                    {% endif %}
+
+                    <div class="submit-section" id="submitSection">
+                        <h2>
+                            {% if user_assignment %}
+                                {% if user_assignment.submission_status.assignment_status_name == 'на доработке' or user_assignment.submission_status.assignment_status_name == 'отклонено' %}
+                                    Пересдача работы
+                                {% else %}
+                                    Отправить новую попытку
+                                {% endif %}
+                            {% else %}
+                                Сдача работы
+                            {% endif %}
+                        </h2>
+                        
+                        {% if user_assignment and user_assignment.submission_status.assignment_status_name == 'на проверке' %}
+                        <div class="alert alert-info">
+                            <strong>Ваша работа уже находится на проверке.</strong> 
+                            Вы можете отправить новую версию, но текущая проверка будет прервана.
+                        </div>
+                        {% endif %}
+                        
+                        <form method="post" enctype="multipart/form-data" class="submit-form" id="submitForm">
+                            {% csrf_token %}
+                            
+                            <div class="form-group">
+                                <label for="submission_files" class="form-label">
+                                    <span class="label-text">Файлы с решением *</span>
+                                    <span class="label-required">Обязательное поле</span>
+                                </label>
+                                <div class="file-upload-area" id="fileUploadArea">
+                                    <input type="file" name="submission_files" id="submission_files" class="file-input" 
+                                           multiple required accept=".pdf,.doc,.docx,.zip">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                        <p class="upload-text">Перетащите файлы сюда или нажмите для выбора</p>
+                                        <p class="upload-hint">PDF, DOC, DOCX, ZIP (макс. 50 МБ каждый)</p>
+                                    </div>
+                                    <div class="files-list" id="filesList"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="comment" class="form-label">
+                                    Комментарий к работе
+                                    {% if user_assignment %}
+                                    <span class="label-hint">(предыдущий комментарий будет заменен)</span>
+                                    {% endif %}
+                                </label>
+                                <textarea name="comment" id="comment" rows="4" 
+                                          placeholder="Дополнительные пояснения к вашей работе, особенности выполнения, вопросы преподавателю...">{% if user_assignment and user_assignment.comment %}{{ user_assignment.comment }}{% endif %}</textarea>
+                            </div>
+
+                            <div class="submit-actions">
+                                <a href="{% url 'course_study' assignment.lecture.course.id %}" class="study-btn study-btn-outline">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Вернуться к курсу
+                                </a>
+                                <button type="submit" class="study-btn study-btn-primary" id="submitBtn">
+                                    <i class="fas fa-paper-plane"></i>
+                                    {% if user_assignment %}
+                                        Отправить новую версию
+                                    {% else %}
+                                        Отправить на проверку
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</section>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: transparent;
+}
+
+.practical-submit-section {
+    padding: 0;
+    min-height: 100vh;
+}
+
+.practical-submit-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.practical-header-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.practical-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+}
+
+.practical-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+}
+
+.practical-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.practical-title-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.practical-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: clamp(2em, 5vw, 2.5em);
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    line-height: 1.2;
+}
+
+.practical-meta-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.practical-meta {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.practical-lecture,
+.practical-deadline,
+.practical-type {
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.85em;
+}
+
+.practical-lecture {
+    background: rgba(160, 32, 240, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(160, 32, 240, 0.4);
+}
+
+.practical-deadline {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.deadline-passed {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.4);
+    color: #dc3545;
+}
+
+.practical-type {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(191, 195, 247, 0.3);
+}
+
+.practical-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.practical-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: sticky;
+    top: 20px;
+}
+
+.assignment-info-card,
+.materials-card,
+.submission-rules {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.assignment-info-card h3,
+.materials-card h3,
+.submission-rules h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.assignment-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.85em;
+    min-width: 100px;
+}
+
+.info-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.85em;
+    text-align: right;
+    flex: 1;
+}
+
+.status-active {
+    color: #28a745;
+}
+
+.status-overdue {
+    color: #dc3545;
+}
+
+.download-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    color: #BFC3F7;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.download-link:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.submission-rules ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #BFC3F7;
+}
+
+.submission-rules li {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.submission-rules li:last-child {
+    margin-bottom: 0;
+}
+
+.practical-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.assignment-content {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.description-section,
+.criteria-section,
+.submission-status-section,
+.submit-section {
+    margin-bottom: 30px;
+}
+
+.description-section:last-child,
+.criteria-section:last-child,
+.submission-status-section:last-child,
+.submit-section:last-child {
+    margin-bottom: 0;
+}
+
+.description-section h2,
+.criteria-section h2,
+.submission-status-section h2,
+.submit-section h2 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.5em;
+    margin: 0 0 15px 0;
+    border-bottom: 2px solid #A020F0;
+    padding-bottom: 10px;
+}
+
+.description-content,
+.criteria-content {
+    color: #FFFFFF;
+    line-height: 1.6;
+}
+
+.description-content p,
+.criteria-content p {
+    margin-bottom: 1em;
+}
+
+.description-content p:last-child,
+.criteria-content p:last-child {
+    margin-bottom: 0;
+}
+
+.status-card {
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 12px;
+    padding: 25px;
+    border-left: 5px solid transparent;
+}
+
+.status-completed {
+    border-left-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.status-checking {
+    border-left-color: #ffc107;
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.status-revision {
+    border-left-color: #fd7e14;
+    background: rgba(253, 126, 20, 0.1);
+}
+
+.status-rejected {
+    border-left-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.status-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.attempt-number {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    padding: 4px 10px;
+    background: rgba(123, 127, 213, 0.2);
+    border-radius: 12px;
+}
+
+.status-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    min-width: 120px;
+}
+
+.detail-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    text-align: right;
+    flex: 1;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8em;
+}
+
+.status-completed .status-badge {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.status-checking .status-badge {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+.status-revision .status-badge {
+    background: rgba(253, 126, 20, 0.2);
+    color: #fd7e14;
+    border: 1px solid #fd7e14;
+}
+
+.status-rejected .status-badge {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.submitted-files-section {
+    margin-top: 25px;
+}
+
+.submitted-files-section h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.2em;
+    margin: 0 0 15px 0;
+}
+
+.files-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.file-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    margin-bottom: 4px;
+}
+
+.file-meta {
+    display: flex;
+    gap: 15px;
+}
+
+.file-size,
+.file-date {
+    color: #BFC3F7;
+    font-size: 0.8em;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btn-download,
+.btn-view {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.btn-download {
+    background: rgba(123, 127, 213, 0.2);
+    color: #BFC3F7;
+    border-color: rgba(123, 127, 213, 0.4);
+}
+
+.btn-view {
+    background: rgba(160, 32, 240, 0.2);
+    color: #A020F0;
+    border-color: rgba(160, 32, 240, 0.4);
+}
+
+.btn-download:hover {
+    background: rgba(123, 127, 213, 0.3);
+    color: #FFFFFF;
+}
+
+.btn-view:hover {
+    background: rgba(160, 32, 240, 0.3);
+    color: #FFFFFF;
+}
+
+.feedback-section {
+    margin-top: 25px;
+}
+
+.feedback-section h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.2em;
+    margin: 0 0 15px 0;
+}
+
+.feedback-card {
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.score-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.8em;
+    color: #FFFFFF;
+}
+
+.score-max {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #BFC3F7;
+}
+
+.pass-status {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+}
+
+.passed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.failed {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.feedback-comment h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 10px 0;
+    font-size: 1em;
+}
+
+.feedback-comment p {
+    color: white;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.resubmit-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+    text-align: center;
+}
+
+.resubmit-notice {
+    color: #BFC3F7;
+    margin-bottom: 15px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.submit-section {
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 12px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.submit-section h2 {
+    border-bottom: none;
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.alert-info {
+    background: rgba(23, 162, 184, 0.2);
+    border: 1px solid rgba(23, 162, 184, 0.4);
+    color: #17a2b8;
+}
+
+.submit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.95em;
+}
+
+.label-text {
+    font-weight: bold;
+}
+
+.label-required {
+    color: #ff4757;
+    font-size: 0.8em;
+}
+
+.label-hint {
+    color: #BFC3F7;
+    font-size: 0.8em;
+    font-weight: normal;
+}
+
+.file-upload-area {
+    position: relative;
+    border: 2px dashed rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    background: rgba(191, 195, 247, 0.05);
+}
+
+.file-upload-area:hover {
+    border-color: #A020F0;
+    background: rgba(191, 195, 247, 0.1);
+}
+
+.file-upload-area.dragover {
+    border-color: #A020F0;
+    background: rgba(160, 32, 240, 0.1);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-placeholder {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    opacity: 0.7;
+    color: #BFC3F7;
+}
+
+.upload-text {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    margin: 0 0 8px 0;
+}
+
+.upload-hint {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+.files-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.file-item-icon {
+    font-size: 1.2em;
+}
+
+.file-item-info {
+    flex: 1;
+}
+
+.file-item-name {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.file-item-size {
+    color: #BFC3F7;
+    font-size: 0.8em;
+}
+
+.file-item-remove {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.4);
+    color: #dc3545;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-family: "Arial Black", sans-serif;
+}
+
+.file-item-remove:hover {
+    background: rgba(220, 53, 69, 0.3);
+}
+
+textarea {
+    background: rgba(191, 195, 247, 0.1);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    color: #FFFFFF;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+textarea:focus {
+    border-color: #A020F0;
+}
+
+textarea::placeholder {
+    color: #7B7FD5;
+}
+
+.study-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.study-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.study-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.study-btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.submit-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+@media (max-width: 1024px) {
+    .practical-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .practical-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .practical-title-section {
+        text-align: center;
+    }
+    
+    .practical-meta-info {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .practical-meta {
+        justify-content: center;
+    }
+    
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .submit-actions {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .study-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .practical-breadcrumb,
+    .practical-title-section,
+    .practical-content {
+        padding: 0 15px;
+    }
+    
+    .practical-header-section {
+        padding: 20px 0;
+    }
+    
+    .assignment-content {
+        padding: 20px;
+    }
+    
+    .file-upload-area {
+        padding: 20px;
+    }
+}
+
+.study-btn,
+.download-link,
+.file-card,
+.status-card,
+.feedback-card,
+.submit-section {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.study-btn:hover,
+.download-link:hover {
+    transform: none !important;
+}
+
+.file-card:hover,
+.status-card:hover,
+.feedback-card:hover,
+.submit-section:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.study-btn-primary:hover,
+.study-btn-outline:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.practical-title {
+    text-shadow: none !important;
+}
+
+.practical-submit-section,
+.practical-submit-container,
+.practical-content {
+    background: transparent !important;
+}
+
+.assignment-info-card,
+.materials-card,
+.submission-rules,
+.assignment-content,
+.status-card,
+.feedback-card,
+.submit-section {
+    background: rgba(21, 29, 73, 0.95) !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(123, 127, 213, 0.3) !important;
+}
+</style>
+
+<script>
+function scrollToSubmitForm() {
+    const submitSection = document.getElementById('submitSection');
+    if (submitSection) {
+        submitSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('submission_files');
+    const filesList = document.getElementById('filesList');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    
+    if (fileInput && filesList) {
+        fileInput.addEventListener('change', function() {
+            updateFilesList();
+        });
+        
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+        
+        fileUploadArea.addEventListener('dragleave', function() {
+            fileUploadArea.classList.remove('dragover');
+        });
+        
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            updateFilesList();
+        });
+    }
+    
+    function updateFilesList() {
+        filesList.innerHTML = '';
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            let icon = '📎';
+            if (file.name.toLowerCase().endsWith('.pdf')) icon = '📄';
+            else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) icon = '📝';
+            else if (file.name.toLowerCase().endsWith('.zip')) icon = '📦';
+            
+            fileItem.innerHTML = `
+                <div class="file-item-icon">${icon}</div>
+                <div class="file-item-info">
+                    <div class="file-item-name">${file.name}</div>
+                    <div class="file-item-size">${formatFileSize(file.size)}</div>
+                </div>
+                <button type="button" class="file-item-remove" data-index="${i}">×</button>
+            `;
+            
+            filesList.appendChild(fileItem);
+        }
+        
+        document.querySelectorAll('.file-item-remove').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                removeFile(index);
+            });
+        });
+    }
+    
+    function removeFile(index) {
+        const dt = new DataTransfer();
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dt.items.add(files[i]);
+            }
+        }
+        
+        fileInput.files = dt.files;
+        updateFilesList();
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

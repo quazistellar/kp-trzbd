@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отказ в регистрации - UNIREAX</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 3px solid #350101ff;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #a71717ff 0%, #740303ff 100%);
+            border-radius: 12px 12px 0 0;
+            margin: -20px -20px 30px -20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .warning-container {
+            background: linear-gradient(135deg, #8a2929ff 0%, #5c1a1aff 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #340366;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #340366;
+            display: inline-block;
+            width: 150px;
+        }
+        .comment-box {
+            background-color: #ffe6e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+        .contact-info {
+            background-color: #2e1d65ff;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #310981ff;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">UNIREAX</div>
+            <h1>Регистрация не была подтверждена!</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0;">Требуются дополнительные действия</p>
+        </div>
+        
+        
+        <p>Здравствуйте, <strong>{{ user_obj.last_name }} {{ user_obj.first_name }}{% if user_obj.patronymic %} {{ user_obj.patronymic }}{% endif %}</strong>!</p>
+
+        <div class="user-info">
+            <div class="info-item">
+                <span class="info-label">Запрошенная роль:</span>
+                <strong>{{ user_obj.role.role_name }}</strong>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span>
+                <strong>{{ user_obj.email }}</strong>
+            </div>
+        </div>
+
+        <p>К сожалению, ваша регистрация в качестве роли <strong>{{ user_obj.role.role_name }}</strong> не была подтверждена нашей администрацией. С причиной отказа Вы можете ознакомиться ниже.</p>
+        
+        {% if admin_comment %}
+        <div class="comment-box">
+            <strong>Причина отказа/комментарий администратора:</strong>
+            <p style="margin: 10px 0 0 0;">{{ admin_comment }}</p>
+        </div>
+        {% else %}
+        <div class="comment-box">
+            <p>Для уточнения причины отказа, пожалуйста, свяжитесь с нашей поддержкой.</p>
+        </div>
+        {% endif %}
+        
+        <div class="contact-info">
+            <p><strong>📞 Контакты для связи:</strong></p>
+            <p>Email: unireax@mail.ru</p>
+            <p>Телефон: 8-875-385-81-54 или 8-834-321-77-89</p>
+        </div>
+        
+        <p>Вы можете повторно подать заявку на регистрацию после устранения указанных замечаний.</p>
+        
+        <p>Если вы считаете, что это произошло по ошибке, пожалуйста, свяжитесь с нашей поддержкой по указанным выше контактам для уточнения деталей.</p>
+        
+        <div class="footer">
+            <p style="margin: 0 0 10px 0;">
+                <strong>С уважением,<br>Команда UNIREAX</strong>
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Образовательная платформа нового поколения
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Это письмо отправлено автоматически. Пожалуйста, не отвечайте на него.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

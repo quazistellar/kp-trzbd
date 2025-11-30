@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+    {% if course_obj %}Редактирование курса{% else %}Создание курса{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">{% if course_obj %}Редактирование курса{% else %}Создание нового курса{% endif %}</h1>
+        
+        <div class="user-form-card">
+            <form method="post" class="user-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="user-form-error">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_name.label }} *</label>
+                        {{ form.course_name }}
+                        {% if form.course_name.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.course_name.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_hours.label }} *</label>
+                        {{ form.course_hours }}
+                        {% if form.course_hours.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.course_hours.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.course_description.label }}</label>
+                    {{ form.course_description }}
+                </div>
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_category.label }} *</label>
+                        {{ form.course_category }}
+                        {% if form.course_category.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.course_category.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_type.label }} *</label>
+                        {{ form.course_type }}
+                        {% if form.course_type.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.course_type.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_price.label }}</label>
+                        {{ form.course_price }}
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course_max_places.label }}</label>
+                        {{ form.course_max_places }}
+                    </div>
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.code_room.label }}</label>
+                    {{ form.code_room }}
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.created_by.label }}</label>
+                    {{ form.created_by }}
+                    {% if form.created_by.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.created_by.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div class="user-form-help-text">
+                        Только пользователи с ролью "методист" могут быть создателями курса
+                    </div>
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.course_photo_path.label }}</label>
+                    {{ form.course_photo_path }}
+                    <div class="user-form-help-text">
+                        Допустимые форматы: JPG, PNG. Максимальный размер: 5 МБ
+                    </div>
+                    {% if form.course_photo_path.errors %}
+                    <div class="user-form-field-error">
+                        {{ form.course_photo_path.errors.0 }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if course_obj and course_obj.course_photo_path %}
+                    <div class="current-file-info">
+                        <strong>Текущее фото:</strong>
+                        <img src="{{ course_obj.course_photo_path.url }}" alt="Текущее фото" class="current-photo-preview">
+                        <label class="user-form-checkbox-label remove-file-label">
+                            <input type="checkbox" name="course_photo_path-clear">
+                            <span class="user-form-checkbox-custom"></span>
+                            Удалить текущее фото
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="user-form-checkboxes">
+                    <label class="user-form-checkbox-label">
+                        {{ form.has_certificate }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Выдавать сертификат
+                    </label>
+                    
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_active }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Активный курс
+                    </label>
+
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_completed }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Курс завершён
+                    </label>
+                </div>
+
+                <div class="user-form-actions">
+                    <button type="submit" class="user-form-submit">
+                        {% if course_obj %}Обновить{% else %}Создать{% endif %} курс
+                    </button>
+                    <a href="{% url 'course_list' %}" class="user-form-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

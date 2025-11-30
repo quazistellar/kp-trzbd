@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Бэкап - UNIREAX
+{% endblock %}
+
+{% block link_style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<section class="backup-section">
+    <div class="backup-container">
+        <div class="backup-header">
+            <h1 class="backup-title">Резервное копирование и восстановление</h1>
+            <p class="backup-subtitle">Управление резервными копиями базы данных системы UNIREAX</p>
+        </div>
+
+        <div class="backup-warning">
+            <strong>⚠️ ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ</strong>
+            Восстановление базы данных полностью заменит все текущие данные на данные из выбранного бэкапа. 
+            Эта операция необратима и может привести к потере данных. Всегда создавайте новый бэкап перед восстановлением!
+        </div>
+
+        <div class="backup-actions-grid">
+            <div class="backup-action-card">
+                <h3>Создать резервную копию</h3>
+                <p>Создайте полную резервную копию всей базы данных. Файл будет сохранен в формате SQL с временной меткой в названии.</p>
+                <form action="{% url 'backup_database' %}" method="post" class="backup-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="backup">
+                    <button type="submit" class="backup-btn backup-btn-create">
+                        Создать бэкап
+                    </button>
+                </form>
+            </div>
+
+            <div class="backup-action-card restore">
+                <h3>Восстановить из копии</h3>
+                <p>Восстановите базу данных из ранее созданной резервной копии. Все текущие данные будут заменены.</p>
+                <div class="backup-form-group">
+                    {% if backups %}
+                    <form action="{% url 'backup_database' %}" method="post" class="backup-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="restore">
+                        <select name="backup_file" class="backup-select" required>
+                            <option value="">-- Выберите файл бэкапа --</option>
+                            {% for backup in backups %}
+                            <option value="{{ backup.name }}">
+                                {{ backup.name }} ({{ backup.formatted_size }}) - {{ backup.formatted_time }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="backup-btn backup-btn-restore" onclick="return confirmRestore()">
+                            Восстановить
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="backup-btn backup-btn-restore" disabled>
+                        Нет доступных бэкапов
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="backup-list">
+            <h3>Доступные резервные копии</h3>
+            
+            {% if backups %}
+                {% for backup in backups %}
+                <div class="backup-item">
+                    <div class="backup-info">
+                        <div class="backup-name">{{ backup.name }}</div>
+                        <div class="backup-details">
+                            <span>{{ backup.formatted_size }}</span>
+                            <span>{{ backup.formatted_time }}</span>
+                            <span>{{ backup.path }}</span>
+                        </div>
+                    </div>
+                    <div class="backup-actions">
+                        <form action="{% url 'backup_database' %}" method="post" class="backup-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="restore">
+                            <input type="hidden" name="backup_file" value="{{ backup.name }}">
+                            <button type="submit" class="backup-btn backup-btn-restore" onclick="return confirmRestore()">
+                                Восстановить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="backup-empty">
+                    Резервные копии отсутствуют<br>
+                    <small>Создайте первую резервную копию для защиты данных</small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+function confirmRestore() {
+    const confirmed = confirm(
+        '⚠️ ВНИМАНИЕ! КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ!\n\n' +
+        'Вы собираетесь восстановить базу данных из резервной копии.\n\n' +
+        '❌ ВСЕ ТЕКУЩИЕ ДАННЫЕ БУДУТ ПОЛНОСТЬЮ УДАЛЕНЫ И ЗАМЕНЕНЫ!\n' +
+        '❌ ЭТО ДЕЙСТВИЕ НЕОБРАТИМО!\n' +
+        '❌ ВСЕ ИЗМЕНЕНИЯ ПОСЛЕ СОЗДАНИЯ БЭКАПА БУДУТ УТЕРЯНЫ!\n\n' +
+        'Вы уверены, что хотите продолжить?'
+    );
+    
+    if (!confirmed) {
+        return false;
+    }
+    
+    const doubleConfirmed = confirm(
+        '🚨 ПОСЛЕДНЕЕ ПРЕДУПРЕЖДЕНИЕ!\n\n' +
+        'Это приведет к полной замене всех данных в системе.\n' +
+        'Отменить восстановление будет невозможно.\n\n' +
+        'Введите OK для подтверждения:'
+    );
+    
+    return doubleConfirmed;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Backup system loaded');
+});
+</script>
+{% endblock %}

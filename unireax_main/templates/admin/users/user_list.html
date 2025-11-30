@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Управление пользователями{% endblock %}
+
+{% block link_style %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Управление пользователями</h1>
+        <p class="users-subtitle">Список всех зарегистрированных пользователей</p>
+
+        <div class="users-filters-section">
+            <form method="get" class="users-filter-form">
+                <div class="users-search-bar">
+                    <input type="text" name="search" placeholder="Поиск пользователей..." value="{{ request.GET.search }}">
+                </div>
+                <select name="role_filter" class="users-select-filter">
+                    <option value="">Все роли</option>
+                    {% for role in roles %}
+                        <option value="{{ role.id }}" {% if request.GET.role_filter == role.id|stringformat:"i" %}selected{% endif %}>
+                            {{ role.role_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="verified_filter" class="users-select-filter">
+                    <option value="">Все статусы</option>
+                    <option value="verified" {% if request.GET.verified_filter == 'verified' %}selected{% endif %}>Подтверждённые</option>
+                    <option value="not_verified" {% if request.GET.verified_filter == 'not_verified' %}selected{% endif %}>Не подтверждённые</option>
+                </select>
+                <button type="submit" class="users-filter-btn">Применить</button>
+                <a href="{% url 'user_list' %}" class="users-reset-btn">Сбросить</a>
+            </form>
+        </div>
+
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ФИО</th>
+                        <th>Почта</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Должность</th>
+                        <th>Учебное заведение</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.last_name|default:"Фамилия не указана" }} {{ user.first_name|default:"Имя не указано" }} {{ user.patronymic|default:"Отчество не указано" }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role.role_name }}</td>
+                        <td>
+                            {% if user.is_verified %}
+                                <span class="user-status-verified">✓ Подтверждён</span>
+                            {% else %}
+                                <span class="user-status-pending">Ожидает</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.position|default:"-" }}</td>
+                        <td>{{ user.educational_institution|default:"-" }}</td>
+                        <td>{{ user.date_joined|date:'d.m.Y H:i' }}</td>
+                        <td>
+                            <div class="users-actions">
+                                <a href="{% url 'user_detail' user.id %}" class="users-action-view">Просмотр</a>
+                                <a href="{% url 'create_update_user' user.id %}" class="users-action-edit">Изменить</a>
+                                <a href="{% url 'delete_user' user.id %}" class="users-action-delete">Удалить</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="users-no-data">Пользователи не найдены.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="users-add-section">
+            <a href="{% url 'create_update_user' %}" class="users-add-btn">Добавить нового пользователя</a>
+        </div>
+
+        {% if users.has_other_pages %}
+        <div class="users-pagination">
+            <span class="users-pagination-links">
+                {% if users.has_previous %}
+                    <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role_filter %}&role_filter={{ request.GET.role_filter }}{% endif %}{% if request.GET.verified_filter %}&verified_filter={{ request.GET.verified_filter }}{% endif %}">&laquo; Первая</a>
+                    <a href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role_filter %}&role_filter={{ request.GET.role_filter }}{% endif %}{% if request.GET.verified_filter %}&verified_filter={{ request.GET.verified_filter }}{% endif %}">Предыдущая</a>
+                {% endif %}
+
+                <span class="users-pagination-current">
+                    Страница {{ users.number }} из {{ users.paginator.num_pages }}.
+                </span>
+
+                {% if users.has_next %}
+                    <a href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role_filter %}&role_filter={{ request.GET.role_filter }}{% endif %}{% if request.GET.verified_filter %}&verified_filter={{ request.GET.verified_filter }}{% endif %}">Следующая</a>
+                    <a href="?page={{ users.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role_filter %}&role_filter={{ request.GET.role_filter }}{% endif %}{% if request.GET.verified_filter %}&verified_filter={{ request.GET.verified_filter }}{% endif %}">Последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

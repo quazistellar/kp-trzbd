@@ -1,0 +1,1316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+{{ course.course_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="course-study-section">
+    <div class="course-study-container">
+        <div class="course-study-header">
+            <div class="course-study-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ course.course_name }}</span>
+            </div>
+            
+            <div class="course-study-title-section">
+                <h1 class="course-study-title">{{ course.course_name }}</h1>
+                <div class="course-study-progress">
+                    <div class="progress-info">
+                        <span class="progress-label">Общий прогресс:</span>
+                        <span class="progress-value">{{ progress|floatformat:0 }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="course-study-content">
+            <aside class="course-study-sidebar">
+                <nav class="study-nav">
+                    <button class="study-nav-item active" data-tab="lectures">
+                        <i class="fas fa-book study-nav-icon"></i>
+                        <span>Лекции</span>
+                    </button>
+                    <button class="study-nav-item" data-tab="practicals">
+                        <i class="fas fa-tasks study-nav-icon"></i>
+                        <span>Практические</span>
+                    </button>
+                    <button class="study-nav-item" data-tab="tests">
+                        <i class="fas fa-question-circle study-nav-icon"></i>
+                        <span>Тесты</span>
+                    </button>
+                    <button class="study-nav-item study-nav-exit" id="exit-course-btn">
+                        <i class="fas fa-sign-out-alt study-nav-icon"></i>
+                        <span>Выйти из курса</span>
+                    </button>
+                </nav>
+
+                <div class="student-nav-section">
+                    <h3 class="student-nav-title">Мои результаты</h3>
+                    <div class="student-nav-links">
+                        <a href="{% url 'student_statistics' course.id %}" class="student-nav-link">
+                            <i class="fas fa-chart-bar nav-link-icon"></i>
+                            <span>Статистика</span>
+                        </a>
+                        <a href="{% url 'graded_assignments' course.id %}" class="student-nav-link">
+                            <i class="fas fa-check-circle nav-link-icon"></i>
+                            <span>Оцененные работы</span>
+                        </a>
+                        <a href="{% url 'all_test_results' course.id %}" class="student-nav-link">
+                            <i class="fas fa-clipboard-list nav-link-icon"></i>
+                            <span>Результаты тестов</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="certificate-section">
+                    <h3 class="certificate-title">
+                        <i class="fas fa-award"></i> Сертификат
+                    </h3>
+                    <div class="certificate-status">
+                        {% if course.has_certificate %}
+                            <div id="certificate-info">
+                                <div class="certificate-pending" id="certificate-pending">
+                                    {% if not course.is_completed %}
+                                    <div class="certificate-warning">
+                                        <i class="fas fa-info-circle"></i>
+                                        <div>
+                                            <strong>Курс пополняется</strong>
+                                            <p>Сертификат будет доступен после завершения курса</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <p style="color: white; font-family:'Arial Black'"><i class="fas fa-graduation-cap"></i> После завершения курса вы получите сертификат</p>
+                                    <button class="btn btn-outline" onclick="checkCertificateEligibility()">
+                                        <i class="fas fa-search"></i> Проверить возможность
+                                    </button>
+                                </div>
+                                
+                                <div class="certificate-eligible" id="certificate-eligible" style="display: none;">
+                                    <div class="certificate-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div>
+                                            <strong>Поздравляем!</strong>
+                                            <p>Вы выполнили все условия для получения сертификата</p>
+                                        </div>
+                                    </div>
+                                    <a href="{% url 'generate_certificate' course.id %}" class="btn btn-primary">
+                                        <i class="fas fa-graduation-cap"></i> Получить сертификат
+                                    </a>
+                                </div>
+                                
+                                <div class="certificate-existing" id="certificate-existing" style="display: none; font-family: 'Arial Black'">
+                                    <div class="certificate-info">
+                                        <div>
+                                            <strong>Сертификат получен</strong>
+                                            <p>Ваш сертификат готов</p>
+                                        </div>
+                                    </div>
+                                    <a href="#" id="certificate-link" class="btn btn-outline">
+                                        <i class="fas fa-eye"></i> Посмотреть
+                                    </a>
+                                </div>
+
+                                <div class="certificate-error" id="certificate-error" style="display: none;">
+                                    <div class="error-message" id="error-message"></div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="certificate-not-available">
+                                <i class="fas fa-times-circle"></i>
+                                <p>Для этого курса не предусмотрен сертификат</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+               <div class="deadlines-section">
+                <h3 class="deadlines-title">Ближайшие дедлайны</h3>
+                {% if upcoming_deadlines %}
+                <div class="deadlines-list">
+                    {% for deadline in upcoming_deadlines %}
+                    <div class="deadline-item deadline-practical">
+                        <div class="deadline-type-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="deadline-info">
+                            <div class="deadline-title">{{ deadline.title }}</div>
+                            <div class="deadline-meta">
+                                <span class="deadline-date">{{ deadline.deadline|date:"d.m.Y H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-deadlines">
+                    <i class="fas fa-smile no-deadlines-icon"></i>
+                    <p>В ближайшее время ничего сдавать не надо</p>
+                </div>
+                {% endif %}
+            </div>
+            </aside>
+
+            <section class="course-study-main">
+                <div class="study-tab-content active" id="lectures-tab">
+                    <div class="tab-header">
+                        <h2>Лекции курса</h2>
+                        <p>Изучайте материалы лекций в предложенном порядке</p>
+                    </div>
+
+                    {% if lectures %}
+                    <div class="lectures-list">
+                        {% for lecture in lectures %}
+                        <div class="lecture-card">
+                            <div class="lecture-header">
+                                <div class="lecture-order">Лекция {{ lecture.lecture_order }}</div>
+                                <div class="lecture-status lecture-status-available">Доступна</div>
+                            </div>
+                            <h3 class="lecture-title">{{ lecture.lecture_name }}</h3>
+                            <p class="lecture-description">{{ lecture.lecture_content|truncatewords:30 }}</p>
+                            
+                            <div class="lecture-actions">
+                                {% if lecture.lecture_document_path %}
+                                <a href="{{ lecture.lecture_document_path.url }}" class="study-btn study-btn-outline" target="_blank">
+                                    <i class="fas fa-download"></i>
+                                    Материалы
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'lecture_detail' lecture.id %}" class="study-btn study-btn-primary">
+                                    <i class="fas fa-book-open"></i>
+                                    Читать
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="study-empty-state">
+                        <i class="fas fa-book study-empty-icon"></i>
+                        <h3>Лекции пока не добавлены</h3>
+                        <p>Материалы курса находятся в разработке</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="study-tab-content" id="practicals-tab">
+                    <div class="tab-header">
+                        <h2>Практические работы</h2>
+                        <p>Выполняйте задания и загружайте решения</p>
+                    </div>
+
+                    {% if practical_works %}
+                    <div class="practicals-list">
+                        {% for practical in practical_works %}
+                        <div class="practical-card">
+                            <div class="practical-header">
+                                <div class="practical-info">
+                                    <span class="practical-lecture">Практическая работа по лекции {{ practical.lecture.lecture_order }}</span>
+                                    <h3 class="practical-title">{{ practical.practical_assignment_name }}</h3>
+                                </div>
+                                <div class="practical-meta">
+                                   <div class="practical-deadline">
+                                        <span class="deadline-label">
+                                            {% if practical.assignment_deadline %}
+                                                Срок сдачи:
+                                            {% else %}
+                                                Без срока сдачи
+                                            {% endif %}
+                                        </span>
+                                        {% if practical.assignment_deadline %}
+                                            <span class="deadline-value {% if practical.assignment_deadline < current_time %}deadline-passed{% endif %}">
+                                                {{ practical.assignment_deadline|date:"d.m.Y H:i" }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                   
+                                    {% for user_assignment in user_assignments %}
+                                    {% if user_assignment.practical_assignment_id == practical.id %}
+                                       <div class="practical-grade">
+                                        {% for user_assignment in user_assignments %}
+                                        {% if user_assignment.practical_assignment_id == practical.id %}
+                                            {% if user_assignment.submission_status.assignment_status_name == 'завершен' %}
+                                                {% for feedback in user_assignment.feedback_set.all %}
+                                                    {% if practical.max_score %}
+                                                    <div class="grade-badge grade-scored">
+                                                        Баллы: {{ feedback.score }}/{{ practical.max_score }}
+                                                    </div>
+                                                    {% else %}
+                                                    <div class="grade-badge {% if feedback.is_passed %}grade-passed{% else %}grade-failed{% endif %}">
+                                                        {{ feedback.is_passed|yesno:"Зачёт,Незачёт" }}
+                                                    </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="grade-badge 
+                                                    {% if user_assignment.submission_status.assignment_status_name == 'не сдано' %}grade-not-submitted
+                                                    {% elif user_assignment.submission_status.assignment_status_name == 'на проверке' %}grade-in-review
+                                                    {% elif user_assignment.submission_status.assignment_status_name == 'на доработке' %}grade-returned
+                                                    {% elif user_assignment.submission_status.assignment_status_name == 'отклонено' %}grade-rejected
+                                                    {% elif user_assignment.submission_status.assignment_status_name == 'просрочено' %}grade-overdue
+                                                    {% else %}grade-not-submitted{% endif %}">
+                                                    
+                                                    {{ user_assignment.submission_status.assignment_status_name }}
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                   {% endif %}
+                                {% endfor %}
+
+                                </div>
+                            </div>
+                            
+                            <p class="practical-description">{{ practical.practical_assignment_description|truncatewords:30 }}</p>
+                            
+                            {% if practical.assignment_criteria %}
+                                <div class="practical-criteria" style="background-color: #8c6cbc; font-family: 'Arial Black'; border-left: 4px solid #660473;">
+                                <strong style="color: white;">Критерии оценки:</strong>
+                                <p>{{ practical.assignment_criteria|truncatewords:20 }}</p>
+                            </div>
+                            {% endif %}
+
+                            <div class="practical-actions">
+                                {% if practical.assignment_document_path %}
+                                <a href="{{ practical.assignment_document_path.url }}" class="study-btn study-btn-outline" target="_blank">
+                                    <i class="fas fa-download"></i>
+                                    Задание
+                                </a>
+                                {% endif %}
+                                
+                                {% for user_assignment in user_assignments %}
+                                    {% if user_assignment.practical_assignment_id == practical.id %}
+                                        {% if user_assignment.submission_status.status == 'graded' and user_assignment.attempts_remaining > 0 %}
+                                            <a href="{% url 'practical_submit' practical.id %}" class="study-btn study-btn-primary">
+                                                <i class="fas fa-sync-alt"></i>
+                                                Пересдать (осталось {{ user_assignment.attempts_remaining }} попыток)
+                                            </a>
+                                        {% elif user_assignment.submission_status.status == 'graded' and user_assignment.attempts_remaining <= 0 %}
+                                            <button class="study-btn study-btn-disabled" disabled>
+                                                <i class="fas fa-lock"></i>
+                                                Попытки исчерпаны
+                                            </button>
+                                        {% elif user_assignment.submission_status.status == 'submitted' %}
+                                            <button class="study-btn study-btn-disabled" disabled>
+                                                <i class="fas fa-clock"></i>
+                                                На проверке
+                                            </button>
+                                        {% else %}
+                                            <a href="{% url 'practical_submit' practical.id %}" class="study-btn study-btn-primary">
+                                                <i class="fas fa-upload"></i>
+                                                Сдать работу
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% empty %}
+                                    <a href="{% url 'practical_submit' practical.id %}" class="study-btn study-btn-primary">
+                                        <i class="fas fa-upload"></i>
+                                        Сдать работу
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="study-empty-state">
+                        <i class="fas fa-tasks study-empty-icon"></i>
+                        <h3>Практические работы не назначены</h3>
+                        <p>Задания появятся в ближайшее время</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+    <div class="study-tab-content" id="tests-tab">
+        <div class="tab-header">
+            <h2>Тесты и проверка знаний</h2>
+            <p>Пройдите тесты для закрепления материала</p>
+        </div>
+
+    {% if tests %}
+    <div class="tests-list">
+        {% for test in tests %}
+        <div class="test-card">
+            <div class="test-header">
+                <div class="test-info">
+                    <span class="test-lecture">Тестирование по лекции {{ test.lecture.lecture_order }}</span>
+                    <h3 class="test-title">{{ test.test_name }}</h3>
+                </div>
+                <div class="test-meta">
+                    <span class="test-type">
+                        {% if test.grading_form == "points" %}
+                            По баллам
+                        {% elif test.grading_form == "pass_fail" %}
+                            Зачёт/незачёт
+                        {% else %}
+                            Тест
+                        {% endif %}
+                    </span>
+                    {% if test.passing_score %}
+                    <span class="test-passing">Проходной балл: {{ test.passing_score }}</span>
+                    {% endif %}
+                    
+                    {% for test_id, test_result in test_last_results.items %}
+                        {% if test_id == test.id %}
+                            {% if test_result %}
+                                <div class="test-result-badge {% if test_result.is_passed %}result-passed{% else %}result-failed{% endif %}">
+                                    {% if test.grading_form == "points" %}
+                                       Набрано баллов: {{ test_result.display_score }} - {{ test_result.display_status }}
+                                    {% else %}
+                                        {{ test_result.display_status }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="test-result-badge result-not-attempted">
+                                    Не пройден
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if test.test_description %}
+            <p class="test-description">{{ test.test_description|truncatewords:30 }}</p>
+            {% endif %}
+
+            <div class="test-actions">
+                {% for test_id, test_result in test_last_results.items %}
+                    {% if test_id == test.id %}
+                        {% if test_result %}
+                            {% if test_result.attempts_remaining > 0 and not test_result.is_passed %}
+                                <a href="{% url 'test_start' test.id %}" class="study-btn study-btn-primary">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Пересдать (осталось {{ test_result.attempts_remaining }} попыток)
+                                </a>
+                            {% elif test_result.is_passed %}
+                                <button class="study-btn study-btn-success" disabled>
+                                    <i class="fas fa-check"></i>
+                                    {{ test_result.display_status }}
+                                </button>
+                            {% else %}
+                                <button class="study-btn study-btn-disabled" disabled>
+                                    <i class="fas fa-lock"></i>
+                                    Попытки исчерпаны
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'test_start' test.id %}" class="study-btn study-btn-primary">
+                                <i class="fas fa-play-circle"></i>
+                                Начать тест
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if test.max_attempts %}
+                <span class="test-attempts">Макс. попыток: {{ test.max_attempts }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="study-empty-state">
+        <i class="fas fa-question-circle study-empty-icon"></i>
+        <h3>Тесты пока не доступны</h3>
+        <p>Проверочные работы появятся позже</p>
+    </div>
+    {% endif %}
+</div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<div id="exit-course-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Подтверждение выхода из курса</h3>
+            <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="warning-content">
+                <h4>Внимание!</h4>
+                <p>После выхода из курса <strong>будут недоступны</strong> все ваши данные по курсу</p>
+                <p>Вы уверены, что хотите выйти из курса?</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-exit">Отмена</button>
+            <button class="btn btn-danger" id="confirm-exit">Да, выйти из курса</button>
+        </div>
+    </div>
+</div>
+
+<style>
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: rgba(21, 29, 73, 0.95);
+    border: 2px solid rgba(244, 67, 54, 0.5);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(244, 67, 54, 0.3);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #BFC3F7;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #FFFFFF;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.warning-icon {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.warning-icon i {
+    font-size: 3em;
+    color: #F44336;
+}
+
+.warning-content h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #F44336;
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+}
+
+.warning-content p {
+    color: #BFC3F7;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.warning-content ul {
+    color: #BFC3F7;
+    margin: 0 0 15px 20px;
+    padding: 0;
+}
+
+.warning-content li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.btn-secondary:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #F44336, #D32F2F);
+    color: white;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #D32F2F, #C62828);
+}
+
+.study-nav-exit {
+    color: #F44336 !important;
+    border-left: 3px solid #F44336;
+}
+
+.study-nav-exit:hover {
+    background: rgba(244, 67, 54, 0.1) !important;
+    color: #F44336 !important;
+}
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: transparent;
+    overflow-x: hidden;
+}
+
+.course-study-section {
+    padding: 0;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.course-study-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.course-study-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.course-study-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+}
+
+.course-study-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+}
+
+.course-study-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.course-study-title-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+}
+
+.course-study-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: clamp(2em, 5vw, 3em);
+    color: #FFFFFF;
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+}
+
+.course-study-progress {
+    min-width: 300px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.progress-label {
+    color: #BFC3F7;
+    font-size: 1em;
+}
+
+.progress-value {
+    color: #FFFFFF;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(191, 195, 247, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #A020F0, #7B7FD5);
+    border-radius: 10px;
+}
+
+.course-study-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.course-study-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: sticky;
+    top: 20px;
+}
+
+.study-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.study-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1em;
+}
+
+.study-nav-item.active,
+.study-nav-item:hover {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+}
+
+.study-nav-icon {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.student-nav-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.student-nav-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.student-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.student-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    color: #BFC3F7;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+    border: 1px solid transparent;
+    font-size: 0.9em;
+}
+
+.student-nav-link:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    border-color: rgba(123, 127, 213, 0.4);
+}
+
+.nav-link-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 1em;
+}
+
+.certificate-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.certificate-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deadlines-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.deadlines-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.course-study-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    overflow-x: hidden;
+}
+
+.study-tab-content {
+    display: none;
+}
+
+.study-tab-content.active {
+    display: block;
+}
+
+.tab-header {
+    margin-bottom: 25px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.tab-header h2 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.8em;
+    margin: 0 0 8px 0;
+}
+
+.tab-header p {
+    color: #BFC3F7;
+    margin: 0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+}
+
+.lectures-list,
+.practicals-list,
+.tests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.lecture-card,
+.practical-card,
+.test-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.lecture-header,
+.practical-header,
+.test-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.lecture-order,
+.practical-lecture,
+.test-lecture {
+    color: #ffffffff;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.lecture-title,
+.practical-title,
+.test-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.3em;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.lecture-description,
+.practical-description,
+.test-description {
+    color: #BFC3F7;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+    font-size: 1em;
+}
+
+.study-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.study-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.study-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.study-btn-disabled {
+    background: rgba(191, 195, 247, 0.1);
+    color: #7B7FD5;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.study-btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.study-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    color: #BFC3F7;
+}
+
+.study-empty-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.study-empty-state h3 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 12px 0;
+    font-size: 1.5em;
+}
+
+.study-empty-state p {
+    margin: 0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+}
+
+.grade-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.grade-scored {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.grade-passed {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.grade-failed {
+    background: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+    border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.grade-submitted {
+    background: rgba(255, 193, 7, 0.2);
+    color: #FFC107;
+    border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.test-result-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.result-passed {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.result-failed {
+    background: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+    border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.deadline-passed {
+    color: #F44336 !important;
+}
+
+.study-nav-item,
+.student-nav-link,
+.lecture-card,
+.practical-card,
+.test-card,
+.study-btn {
+    transition: none;
+    transform: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.study-nav-item:hover,
+.student-nav-link:hover {
+    transform: none;
+}
+
+.lecture-card:hover,
+.practical-card:hover,
+.test-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.study-btn-primary:hover,
+.study-btn-outline:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.course-study-title,
+.tab-header h2 {
+    text-shadow: none;
+}
+
+.course-study-section,
+.course-study-container,
+.course-study-content {
+    background: transparent;
+}
+
+/* УБРАТЬ ПОДСВЕТКУ И BLUR ЭФФЕКТЫ */
+.study-nav,
+.student-nav-section,
+.certificate-section,
+.deadlines-section,
+.tab-header,
+.lecture-card,
+.practical-card,
+.test-card,
+.study-empty-state {
+    background: rgba(21, 29, 73, 0.95);
+    backdrop-filter: none;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+@media (max-width: 1024px) {
+    .course-study-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .course-study-sidebar {
+        position: static;
+    }
+    
+    .study-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 15px;
+    }
+    
+    .study-nav-item {
+        white-space: nowrap;
+        flex: 1;
+        min-width: 140px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .course-study-title-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .course-study-progress {
+        min-width: auto;
+    }
+    
+    .course-study-title {
+        font-size: 2em;
+    }
+}
+
+@media (max-width: 480px) {
+    .course-study-breadcrumb,
+    .course-study-title-section,
+    .course-study-content {
+        padding: 0 15px;
+    }
+    
+    .course-study-header {
+        padding: 20px 0;
+    }
+    
+    .study-nav {
+        flex-direction: column;
+    }
+    
+    .lecture-card,
+    .practical-card,
+    .test-card {
+        padding: 20px;
+    }
+    
+    .tab-header {
+        padding: 20px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const navItems = document.querySelectorAll('.study-nav-item');
+    const tabContents = document.querySelectorAll('.study-tab-content');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            navItems.forEach(nav => nav.classList.remove('active'));
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            this.classList.add('active');
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+        });
+    });
+});
+
+function checkCertificateEligibility() {
+    fetch('/course/{{ course.id }}/check-certificate/')
+        .then(response => response.json())
+        .then(data => {
+            const pending = document.getElementById('certificate-pending');
+            const eligible = document.getElementById('certificate-eligible');
+            const existing = document.getElementById('certificate-existing');
+            const errorDiv = document.getElementById('certificate-error');
+            const errorMessage = document.getElementById('error-message');
+            const certificateLink = document.getElementById('certificate-link');
+            
+            if (pending) pending.style.display = 'none';
+            if (eligible) eligible.style.display = 'none';
+            if (existing) existing.style.display = 'none';
+            if (errorDiv) errorDiv.style.display = 'none';
+            
+            if (data.eligible && eligible) {
+                eligible.style.display = 'block';
+            } else if (data.has_certificate && existing) {
+                existing.style.display = 'block';
+                if (certificateLink && data.certificate_id) {
+                    certificateLink.href = '/certificate/' + data.certificate_id + '/';
+                }
+            } else if (data.error && errorDiv && errorMessage) {
+                if (pending) pending.style.display = 'block';
+                errorDiv.style.display = 'block';
+                errorMessage.textContent = data.error;
+            } else if (pending) {
+                pending.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorDiv = document.getElementById('certificate-error');
+            const errorMessage = document.getElementById('error-message');
+            if (errorDiv && errorMessage) {
+                errorDiv.style.display = 'block';
+                errorMessage.textContent = 'Ошибка при проверке возможности получения сертификата';
+            }
+        });
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const exitBtn = document.getElementById('exit-course-btn');
+    const modal = document.getElementById('exit-course-modal');
+    const modalClose = document.getElementById('modal-close');
+    const cancelExit = document.getElementById('cancel-exit');
+    const confirmExit = document.getElementById('confirm-exit');
+    
+    if (exitBtn && modal) {
+        exitBtn.addEventListener('click', function() {
+            modal.style.display = 'flex';
+        });
+        
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        
+        modalClose.addEventListener('click', closeModal);
+        cancelExit.addEventListener('click', closeModal);
+        
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        confirmExit.addEventListener('click', function() {
+            confirmExit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выход...';
+            confirmExit.disabled = true;
+            
+            fetch('/course/{{ course.id }}/exit/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url || '{% url "catalog" %}';
+                } else {
+                    alert(data.error || 'Произошла ошибка при выходе из курса');
+                    closeModal();
+                    confirmExit.innerHTML = 'Да, выйти из курса';
+                    confirmExit.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при выходе из курса');
+                closeModal();
+                confirmExit.innerHTML = 'Да, выйти из курса';
+                confirmExit.disabled = false;
+            });
+        });
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

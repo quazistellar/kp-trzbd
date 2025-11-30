@@ -1,0 +1,250 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{% static 'icons/favicon.png' %}" />
+    <title>{% block title_name %}{% endblock %}</title>
+
+    <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        body.theme-loaded {
+            opacity: 1;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body:not(.dark-theme) {
+            background: #7B7FD5 !important;
+        }
+
+        body.dark-theme {
+            background: #1a1a1a !important;
+        }
+
+        :root {
+            --header-bg: #5a61c7;
+            --border-color: #8a92e0;
+            --card-bg: rgba(21, 29, 73, 0.9);
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark-theme {
+            --header-bg: #2d2d2d;
+            --border-color: #444444;
+            --card-bg: #2d2d2d;
+            --shadow: rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            background-color: var(--header-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .course-card,
+        .study-nav,
+        .student-nav-section,
+        .certificate-section,
+        .deadlines-section,
+        .tab-header,
+        .lecture-card,
+        .practical-card,
+        .test-card,
+        .study-empty-state {
+            box-shadow: 0 4px 20px var(--shadow);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+
+        .btn-favorite.active img {
+            filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg);
+        }
+
+        .favorites-badge {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .header, .nav-menu, .dropdown-menu {
+            z-index: 1000 !important;
+        }
+        .nav-menu { z-index: 1001 !important; }
+        .dropdown-menu { z-index: 1002 !important; }
+    </style>
+
+
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.style.backgroundColor = '#1a1a1a';
+                document.body.classList.add('dark-theme');
+            } else {
+                document.documentElement.style.backgroundColor = '#7B7FD5';
+                document.body.classList.remove('dark-theme');
+            }
+        })();
+    </script>
+
+    {% block link_style %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% endblock %}
+</head>
+
+<body>
+    {% block body %}
+        {% block header %}
+            {% include '_inc/_header.html' %}
+        {% endblock %}
+
+        <main>
+            {% block content %}{% endblock %}
+
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="message message-{{ message.tags }}">
+                            {{ message }}
+                            <button class="message-close" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </main>
+
+        {% block footer %}
+            {% include '_inc/_footer.html' %}
+        {% endblock %}
+    {% endblock %}
+
+    {% block scripts %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script>
+            function initializeTheme() {
+                const body = document.body;
+                const savedTheme = localStorage.getItem('theme') || 'light';
+
+                if (savedTheme === 'dark') {
+                    body.classList.add('dark-theme');
+                } else {
+                    body.classList.remove('dark-theme');
+                }
+
+                updateThemeIcon();
+                setTimeout(() => body.classList.add('theme-loaded'), 50);
+            }
+
+            function updateThemeIcon() {
+                const toggle = document.getElementById('themeToggleGlobal');
+                if (!toggle) return;
+                const icon = toggle.querySelector('i');
+                const isDark = document.body.classList.contains('dark-theme');
+                icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            async function saveThemeToServer(theme) {
+                try {
+                    const response = await fetch('{% url "update_theme" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': (() => {
+                                const name = 'csrftoken';
+                                let cookieValue = null;
+                                if (document.cookie && document.cookie !== '') {
+                                    const cookies = document.cookie.split(';');
+                                    for (let i = 0; i < cookies.length; i++) {
+                                        const cookie = cookies[i].trim();
+                                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                            break;
+                                        }
+                                    }
+                                }
+                                return cookieValue;
+                            })()
+                        },
+                        body: JSON.stringify({ theme: theme })
+                    });
+                    return response.ok;
+                } catch (e) {
+                    console.error('Ошибка сохранения темы');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeTheme();
+
+                const themeToggle = document.getElementById('themeToggleGlobal');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', async () => {
+                        const isDark = document.body.classList.contains('dark-theme');
+                        if (isDark) {
+                            document.body.classList.remove('dark-theme');
+                            localStorage.setItem('theme', 'light');
+                            document.documentElement.style.backgroundColor = '#7B7FD5';
+                        } else {
+                            document.body.classList.add('dark-theme');
+                            localStorage.setItem('theme', 'dark');
+                            document.documentElement.style.backgroundColor = '#1a1a1a';
+                        }
+                        updateThemeIcon();
+
+                        {% if user.is_authenticated %}
+                        await saveThemeToServer(isDark ? 'light' : 'dark');
+                        {% endif %}
+                    });
+                }
+
+                const navButton = document.querySelector('.nav-button');
+                const navMenu = document.querySelector('.nav-menu');
+                if (navButton && navMenu) navButton.addEventListener('click', () => navMenu.classList.toggle('active'));
+
+                const profileDropdown = document.getElementById('profileDropdown');
+                const dropdownMenu = document.querySelector('.dropdown-menu');
+                if (profileDropdown && dropdown) {
+                    profileDropdown.addEventListener('click', e => {
+                        e.preventDefault();
+                        dropdown.classList.toggle('active');
+                    });
+                    document.addEventListener('click', e => {
+                        if (!profileDropdown.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.remove('active');
+                        }
+                    });
+                }
+            });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeTheme);
+            } else {
+                initializeTheme();
+            }
+        </script>
+
+        <script src="{% static 'js/search.js' %}"></script>
+        <script src="{% static 'js/fix-scroll.js' %}" defer></script>
+        <script src="{% static 'js/auth.js' %}"></script>
+        <script src="{% static 'js/favourites.js' %}"></script>
+    {% endblock %}
+</body>
+</html>

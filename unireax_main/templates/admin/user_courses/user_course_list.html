@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Управление слушателями курсов{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Управление слушателями курсов</h1>
+        <p class="users-subtitle">Список всех записей пользователей на курсы</p>
+
+        <div class="users-filters-section">
+            <form method="get" class="users-filter-form">
+                <div class="users-search-bar">
+                    <input type="text" name="search" placeholder="Поиск по ФИО, email или названию курса..." value="{{ search_query }}">
+                </div>
+                <select name="course_filter" class="users-select-filter">
+                    <option value="">Все курсы</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if course_filter == course.id|stringformat:"i" %}selected{% endif %}>
+                            {{ course.course_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="status_filter" class="users-select-filter">
+                    <option value="">Все статусы</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Активные</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Неактивные</option>
+                </select>
+                <select name="completion_filter" class="users-select-filter">
+                    <option value="">Все по завершению</option>
+                    <option value="completed" {% if completion_filter == 'completed' %}selected{% endif %}>Завершённые</option>
+                    <option value="not_completed" {% if completion_filter == 'not_completed' %}selected{% endif %}>Не завершённые</option>
+                </select>
+                <button type="submit" class="users-filter-btn">Применить</button>
+                <a href="{% url 'user_course_list' %}" class="users-reset-btn">Сбросить</a>
+            </form>
+        </div>
+
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Пользователь</th>
+                        <th>Курс</th>
+                        <th>Дата регистрации</th>
+                        <th>Статус курса</th>
+                        <th>Дата оплаты</th>
+                        <th>Дата завершения</th>
+                        <th>Цена</th>
+                        <th>Активность</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_course in user_courses %}
+                    <tr>
+                        <td>{{ user_course.id }}</td>
+                        <td>
+                            {{ user_course.user.last_name }} {{ user_course.user.first_name }}
+                            {% if user_course.user.patronymic %}{{ user_course.user.patronymic }}{% endif %}
+                            <br><small>{{ user_course.user.email }}</small>
+                        </td>
+                        <td>{{ user_course.course.course_name }}</td>
+                        <td>{{ user_course.registration_date|date:'d.m.Y' }}</td>
+                        <td>
+                            {% if user_course.status_course %}
+                                <span class="user-status-verified">Завершён</span>
+                            {% else %}
+                                <span class="user-status-pending">В процессе</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user_course.payment_date|date:'d.m.Y'|default:"-" }}</td>
+                        <td>{{ user_course.completion_date|date:'d.m.Y'|default:"-" }}</td>
+                        <td>
+                            {% if user_course.course_price %}
+                                {{ user_course.course_price }} ₽
+                            {% else %}
+                                {{ user_course.course.course_price|default:"Бесплатно" }} ₽
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user_course.is_active %}
+                                <span class="user-status-active">Активен</span>
+                            {% else %}
+                                <span class="user-status-inactive">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="users-actions">
+                                <a href="{% url 'user_course_detail' user_course.id %}" class="users-action-view">Просмотр</a>
+                                <a href="{% url 'create_update_user_course' user_course.id %}" class="users-action-edit">Изменить</a>
+                                <a href="{% url 'delete_user_course' user_course.id %}" class="users-action-delete">Удалить</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="users-no-data">Записи слушателей на курсы не найдены.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="users-add-section">
+            <a href="{% url 'create_update_user_course' %}" class="users-add-btn">Добавить слушателя на курс</a>
+        </div>
+
+        {% if user_courses.has_other_pages %}
+        <div class="users-pagination">
+            <span class="users-pagination-links">
+                {% if user_courses.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if completion_filter %}&completion_filter={{ completion_filter }}{% endif %}">&laquo; Первая</a>
+                    <a href="?page={{ user_courses.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if completion_filter %}&completion_filter={{ completion_filter }}{% endif %}">Предыдущая</a>
+                {% endif %}
+
+                <span class="users-pagination-current">
+                    Страница {{ user_courses.number }} из {{ user_courses.paginator.num_pages }}.
+                </span>
+
+                {% if user_courses.has_next %}
+                    <a href="?page={{ user_courses.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if completion_filter %}&completion_filter={{ completion_filter }}{% endif %}">Следующая</a>
+                    <a href="?page={{ user_courses.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}{% if completion_filter %}&completion_filter={{ completion_filter }}{% endif %}">Последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

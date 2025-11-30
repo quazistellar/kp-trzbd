@@ -1,0 +1,1020 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Лекции — {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<section class="methodist-lectures-panel">
+    <div class="methodist-lectures-container">
+        <div class="methodist-lectures-header">
+            <div class="methodist-lectures-header-content">
+                <h1 class="methodist-lectures-title">Лекции курса</h1>
+                <p class="methodist-lectures-subtitle">Управление лекциями для "{{ course.course_name }}"</p>
+            </div>
+            <div class="methodist-lectures-header-actions">
+                <a href="{% url 'methodist_course_constructor' course.id %}" class="methodist-btn methodist-btn-back">
+                    ← Назад к конструктору
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="methodist-lectures-messages">
+            {% for message in messages %}
+            <div class="methodist-lectures-message methodist-lectures-message-{{ message.tags }}">
+                <span class="methodist-lectures-message-icon">
+                    {% if message.tags == 'success' %}✓
+                    {% elif message.tags == 'error' %}⚠
+                    {% elif message.tags == 'warning' %}ℹ
+                    {% else %}{% endif %}
+                </span>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="methodist-lectures-layout">
+            <div class="methodist-lectures-main">
+                <div class="methodist-lectures-card">
+                    <div class="methodist-lectures-section-header">
+                        <h3 class="methodist-lectures-section-title">Добавить новую лекцию</h3>
+                        <div class="methodist-lectures-section-divider"></div>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" class="methodist-lectures-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_lecture">
+                        
+                        <div class="methodist-lectures-form-grid">
+                            <div class="methodist-lectures-form-field">
+                                <label class="methodist-lectures-form-label">
+                                    Название лекции
+                                    <span class="methodist-lectures-required-mark">*</span>
+                                </label>
+                                <input type="text" name="lecture_name" class="methodist-lectures-form-input" required 
+                                       placeholder="Введите название лекции">
+                            </div>
+                            
+                            <div class="methodist-lectures-form-field">
+                                <label class="methodist-lectures-form-label">
+                                    Порядок отображения
+                                </label>
+                                <input type="number" name="lecture_order" class="methodist-lectures-form-input" 
+                                       min="1" value="{{ next_order }}" placeholder="1">
+                                <div class="methodist-lectures-field-hint">Определяет последовательность в курсе</div>
+                            </div>
+                        </div>
+
+                        <div class="methodist-lectures-form-field">
+                            <label class="methodist-lectures-form-label">
+                                Содержание лекции
+                                <span class="methodist-lectures-required-mark">*</span>
+                            </label>
+                            <textarea name="lecture_content" class="methodist-lectures-form-textarea" rows="5" required
+                                      placeholder="Опишите содержание лекции..."></textarea>
+                            <div class="methodist-lectures-field-hint">Напишите содержание вашей лекции, её полная версия будет в прикрепленном вами файле</div>
+                        </div>
+
+                        <div class="methodist-lectures-form-field">
+                            <label class="methodist-lectures-form-label">Документ лекции (PDF)</label>
+                            <div class="methodist-lectures-file-upload">
+                                <input type="file" name="lecture_document_path" accept=".pdf" 
+                                       class="methodist-lectures-file-input" id="lectureDocument"
+                                       onchange="methodistUpdateFileName(this, 'lectureFileText')">
+                                <label for="lectureDocument" class="methodist-lectures-file-label">
+                                    <span class="methodist-lectures-file-text" id="lectureFileText">Выберите PDF-документ</span>
+                                    <span class="methodist-lectures-file-hint">PDF до 10MB</span>
+                                </label>
+                            </div>
+                            <div class="methodist-lectures-selected-file" id="lectureSelectedFile" style="display: none;">
+                                <span class="methodist-lectures-file-name"></span>
+                                <button type="button" class="methodist-lectures-remove-file" onclick="methodistRemoveFile('lectureDocument', 'lectureFileText', 'lectureSelectedFile')">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="methodist-lectures-form-actions">
+                            <button type="submit" class="methodist-btn methodist-btn-primary methodist-btn-large">
+                                Добавить лекцию
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="methodist-lectures-card">
+                    <div class="methodist-lectures-section-header">
+                        <h3 class="methodist-lectures-section-title">Существующие лекции</h3>
+                        <div class="methodist-lectures-list-count">{{ lectures|length }} лекций</div>
+                    </div>
+                    
+                    {% if lectures %}
+                    <div class="methodist-lectures-list">
+                        {% for lecture in lectures %}
+                        <div class="methodist-lectures-item">
+                            <div class="methodist-lectures-item-content">
+                                <div class="methodist-lectures-item-header">
+                                    <h4 class="methodist-lectures-item-title">{{ lecture.lecture_name }}</h4>
+                                    <div class="methodist-lectures-item-meta">
+                                        <span class="methodist-lectures-item-order">Порядок: {{ lecture.lecture_order }}</span>
+                                        {% if lecture.lecture_document_path %}
+                                        <span class="methodist-lectures-item-document">
+                                            Документ
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="methodist-lectures-item-description">
+                                    {{ lecture.lecture_content|truncatewords:30 }}
+                                </p>
+                            </div>
+                            <div class="methodist-lectures-item-actions">
+                                <button onclick="methodistEditLecture({{ lecture.id }})" 
+                                        class="methodist-btn methodist-btn-outline">
+                                    Редактировать
+                                </button>
+                                <form method="post" class="methodist-lectures-delete-form" 
+                                      onsubmit="return confirm('Удалить лекцию «{{ lecture.lecture_name }}»?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_lecture">
+                                    <input type="hidden" name="lecture_id" value="{{ lecture.id }}">
+                                    <button type="submit" class="methodist-btn methodist-btn-danger">
+                                        Удалить
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="methodist-edit-modal-{{ lecture.id }}" class="methodist-lectures-modal">
+                            <div class="methodist-lectures-modal-content">
+                                <div class="methodist-lectures-modal-header">
+                                    <h3 class="methodist-lectures-modal-title">Редактировать лекцию</h3>
+                                    <span class="methodist-lectures-modal-close" onclick="methodistCloseModal({{ lecture.id }})">×</span>
+                                </div>
+                                <form method="post" enctype="multipart/form-data" class="methodist-lectures-modal-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_lecture">
+                                    <input type="hidden" name="lecture_id" value="{{ lecture.id }}">
+                                    
+                                    <div class="methodist-lectures-form-grid">
+                                        <div class="methodist-lectures-form-field">
+                                            <label class="methodist-lectures-form-label">
+                                                Название лекции
+                                                <span class="methodist-lectures-required-mark">*</span>
+                                            </label>
+                                            <input type="text" name="lecture_name" value="{{ lecture.lecture_name }}" 
+                                                   class="methodist-lectures-form-input" required>
+                                        </div>
+                                        
+                                        <div class="methodist-lectures-form-field">
+                                            <label class="methodist-lectures-form-label">Порядок отображения</label>
+                                            <input type="number" name="lecture_order" value="{{ lecture.lecture_order }}" 
+                                                   class="methodist-lectures-form-input" min="1">
+                                        </div>
+                                    </div>
+
+                                    <div class="methodist-lectures-form-field">
+                                        <label class="methodist-lectures-form-label">
+                                            Содержание лекции
+                                            <span class="methodist-lectures-required-mark">*</span>
+                                        </label>
+                                        <textarea name="lecture_content" class="methodist-lectures-form-textarea" 
+                                                  rows="5" required>{{ lecture.lecture_content }}</textarea>
+                                    </div>
+
+                                    <div class="methodist-lectures-form-field">
+                                        <label class="methodist-lectures-form-label">Документ лекции (PDF)</label>
+                                        <div class="methodist-lectures-file-upload">
+                                            <input type="file" name="lecture_document_path" accept=".pdf" 
+                                                   class="methodist-lectures-file-input" 
+                                                   id="editLectureDocument-{{ lecture.id }}"
+                                                   onchange="methodistUpdateFileName(this, 'editLectureFileText-{{ lecture.id }}')">
+                                            <label for="editLectureDocument-{{ lecture.id }}" class="methodist-lectures-file-label">
+                                                <span class="methodist-lectures-file-text" id="editLectureFileText-{{ lecture.id }}">Выберите новый PDF-документ</span>
+                                                <span class="methodist-lectures-file-hint">Оставьте пустым, чтобы сохранить текущий</span>
+                                            </label>
+                                        </div>
+                                        <div class="methodist-lectures-selected-file" id="editLectureSelectedFile-{{ lecture.id }}" style="display: none;">
+                                            <span class="methodist-lectures-file-name"></span>
+                                            <button type="button" class="methodist-lectures-remove-file" 
+                                                    onclick="methodistRemoveFile('editLectureDocument-{{ lecture.id }}', 'editLectureFileText-{{ lecture.id }}', 'editLectureSelectedFile-{{ lecture.id }}')">
+                                                ×
+                                            </button>
+                                        </div>
+                                        {% if lecture.lecture_document_path %}
+                                        <div class="methodist-lectures-current-document">
+                                            <span class="methodist-lectures-document-text">Текущий документ:</span>
+                                            <a href="{{ lecture.lecture_document_path.url }}" target="_blank" 
+                                               class="methodist-lectures-document-link">
+                                                📎 {{ lecture.lecture_document_path.name|slice:"-20:" }}
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="methodist-lectures-modal-actions">
+                                        <button type="submit" class="methodist-btn methodist-btn-primary">
+                                            Сохранить изменения
+                                        </button>
+                                        <button type="button" onclick="methodistCloseModal({{ lecture.id }})" 
+                                                class="methodist-btn methodist-btn-outline">
+                                            Отмена
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="methodist-lectures-empty">
+                        <h4 class="methodist-lectures-empty-title">Лекций пока нет</h4>
+                        <p class="methodist-lectures-empty-text">Добавьте первую лекцию используя форму выше</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="methodist-lectures-sidebar">
+                <div class="methodist-lectures-sidebar-card">
+                    <h4 class="methodist-lectures-sidebar-title">Советы по лекциям</h4>
+                    <ul class="methodist-lectures-tips-list">
+                        <li class="methodist-lectures-tip-item">
+                            <strong>Название:</strong> Должно четко отражать содержание
+                        </li>
+                        <li class="methodist-lectures-tip-item">
+                            <strong>Порядок:</strong> Определяет последовательность изучения
+                        </li>
+                        <li class="methodist-lectures-tip-item">
+                            <strong>Содержание:</strong> Используйте четкую структуру
+                        </li>
+                        <li class="methodist-lectures-tip-item">
+                            <strong>Документы:</strong> PDF-файлы для основных материалов лекции
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="methodist-lectures-sidebar-card">
+                    <h4 class="methodist-lectures-sidebar-title">Статистика</h4>
+                    <div class="methodist-lectures-stats">
+                        <div class="methodist-lectures-stat-item">
+                            <span class="methodist-lectures-stat-label">Всего лекций:</span>
+                            <span class="methodist-lectures-stat-value">{{ lectures|length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+
+body {
+    background-color: #7B7FD5 !important;
+}
+
+
+.methodist-lectures-panel {
+    padding: 30px 0;
+    min-height: 100vh;
+}
+
+.methodist-lectures-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.methodist-lectures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    gap: 30px;
+}
+
+.methodist-lectures-header-content {
+    flex: 1;
+}
+
+.methodist-lectures-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.5em;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+
+.methodist-lectures-subtitle {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #BFC3F7;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.methodist-lectures-header-actions {
+    flex-shrink: 0;
+}
+
+.methodist-lectures-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+    align-items: start;
+}
+
+.methodist-lectures-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.methodist-lectures-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.methodist-lectures-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.methodist-lectures-section-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.4em;
+    color: #FFFFFF;
+    margin: 0;
+}
+
+.methodist-lectures-section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, #7B7FD5, transparent);
+    border-radius: 2px;
+    flex: 1;
+    margin-left: 20px;
+}
+
+.methodist-lectures-list-count {
+    font-family: "Arial Black", sans-serif;
+    color: #BFC3F7;
+    font-size: 0.9em;
+    background: rgba(123, 127, 213, 0.2);
+    padding: 6px 12px;
+    border-radius: 15px;
+}
+
+.methodist-lectures-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.methodist-lectures-form-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.methodist-lectures-form-label {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.methodist-lectures-required-mark {
+    color: #ff4757;
+    font-size: 1.2em;
+}
+
+.methodist-lectures-form-input,
+.methodist-lectures-form-textarea {
+    background: rgba(191, 195, 247, 0.1);
+    border: 2px solid rgba(123, 127, 213, 0.4);
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+    color: #FFFFFF;
+    outline: none;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.methodist-lectures-form-input:focus,
+.methodist-lectures-form-textarea:focus {
+    border-color: #A020F0;
+    box-shadow: 0 0 0 3px rgba(160, 32, 240, 0.1);
+}
+
+.methodist-lectures-form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-field-hint {
+    color: #BFC3F7;
+    font-size: 0.85em;
+    margin-top: 6px;
+    opacity: 0.7;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-file-upload {
+    position: relative;
+}
+
+.methodist-lectures-file-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.methodist-lectures-file-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    border: 2px dashed rgba(123, 127, 213, 0.4);
+    border-radius: 12px;
+    background: rgba(191, 195, 247, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.methodist-lectures-file-label:hover {
+    border-color: #A020F0;
+    background: rgba(191, 195, 247, 0.1);
+}
+
+.methodist-lectures-file-text {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 5px;
+}
+
+.methodist-lectures-file-hint {
+    color: #BFC3F7;
+    font-size: 0.85em;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-selected-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background: rgba(123, 127, 213, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    animation: methodistFileAppear 0.3s ease;
+}
+
+@keyframes methodistFileAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.methodist-lectures-file-name {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex: 1;
+}
+
+.methodist-lectures-remove-file {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.4);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+}
+
+.methodist-lectures-remove-file:hover {
+    background: rgba(220, 53, 69, 0.3);
+    transform: scale(1.1);
+}
+
+.methodist-lectures-current-document {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.methodist-lectures-document-text {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    margin-right: 10px;
+}
+
+.methodist-lectures-document-link {
+    color: #28a745;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.methodist-lectures-document-link:hover {
+    text-decoration: underline;
+}
+
+.methodist-lectures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.methodist-lectures-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.2);
+    transition: all 0.3s ease;
+}
+
+.methodist-lectures-item:hover {
+    background: rgba(191, 195, 247, 0.15);
+    border-color: rgba(123, 127, 213, 0.4);
+    transform: translateY(-2px);
+}
+
+.methodist-lectures-item-content {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.methodist-lectures-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.methodist-lectures-item-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.methodist-lectures-item-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.methodist-lectures-item-order {
+    color: #BFC3F7;
+    font-size: 0.85em;
+    font-family: "Arial Black", sans-serif;
+    background: rgba(123, 127, 213, 0.2);
+    padding: 4px 8px;
+    border-radius: 10px;
+}
+
+.methodist-lectures-item-document {
+    color: #28a745;
+    font-size: 0.85em;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-item-description {
+    color: #BFC3F7;
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin: 0;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-item-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.methodist-lectures-delete-form {
+    margin: 0;
+}
+
+.methodist-btn-outline {
+    background: transparent;
+    color: #BFC3F7;
+    border: 2px solid rgba(123, 127, 213, 0.6);
+    padding: 10px 20px;
+}
+
+.methodist-btn-outline:hover {
+    background: rgba(123, 127, 213, 0.1);
+    border-color: #A020F0;
+    color: #FFFFFF;
+}
+
+.methodist-lectures-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #BFC3F7;
+}
+
+.methodist-lectures-empty-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.methodist-lectures-empty-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 10px 0;
+    font-size: 1.3em;
+}
+
+.methodist-lectures-empty-text {
+    font-family: "Arial Black", sans-serif;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.methodist-lectures-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.methodist-lectures-modal-content {
+    background: rgba(21, 29, 73, 0.95);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: methodistModalSlideIn 0.3s ease;
+}
+
+@keyframes methodistModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.methodist-lectures-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px 0;
+    margin-bottom: 20px;
+}
+
+.methodist-lectures-modal-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.methodist-lectures-modal-close {
+    color: #BFC3F7;
+    font-size: 2em;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.methodist-lectures-modal-close:hover {
+    color: #FFFFFF;
+}
+
+.methodist-lectures-modal-form {
+    padding: 0 30px 30px;
+}
+
+.methodist-lectures-modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.2);
+}
+
+.methodist-lectures-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 20px;
+}
+
+.methodist-lectures-sidebar-card {
+    background: rgba(21, 29, 73, 0.8);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.methodist-lectures-sidebar-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.methodist-lectures-tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.methodist-lectures-tip-item {
+    color: #BFC3F7;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.2);
+    font-size: 0.9em;
+    line-height: 1.4;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-tip-item:last-child {
+    border-bottom: none;
+}
+
+.methodist-lectures-tip-item strong {
+    color: #FFFFFF;
+}
+
+.methodist-lectures-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.methodist-lectures-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.methodist-lectures-stat-label {
+    color: #BFC3F7;
+    font-size: 0.9em;
+    font-family: "Arial Black", sans-serif;
+}
+
+.methodist-lectures-stat-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    background: rgba(123, 127, 213, 0.2);
+    padding: 4px 12px;
+    border-radius: 15px;
+}
+
+.methodist-lectures-messages {
+    margin-bottom: 25px;
+}
+
+.methodist-lectures-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-family: "Arial Black", sans-serif;
+    border: 1px solid transparent;
+}
+
+.methodist-lectures-message-success {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+    color: #d4edda;
+}
+
+.methodist-lectures-message-error {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+    color: #f8d7da;
+}
+
+.methodist-lectures-message-warning {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    color: #fff3cd;
+}
+
+.methodist-lectures-message-icon {
+    font-size: 1.2em;
+}
+
+@media (max-width: 1024px) {
+    .methodist-lectures-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .methodist-lectures-sidebar {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .methodist-lectures-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+    
+    .methodist-lectures-title {
+        font-size: 2em;
+    }
+    
+    .methodist-lectures-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .methodist-lectures-card {
+        padding: 20px;
+    }
+    
+    .methodist-lectures-item {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .methodist-lectures-item-content {
+        margin-right: 0;
+    }
+    
+    .methodist-lectures-item-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .methodist-lectures-modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .methodist-lectures-container {
+        padding: 0 15px;
+    }
+    
+    .methodist-lectures-card {
+        padding: 15px;
+    }
+    
+    .methodist-lectures-title {
+        font-size: 1.7em;
+    }
+    
+    .methodist-lectures-item-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .methodist-lectures-modal-header {
+        padding: 20px 20px 0;
+    }
+    
+    .methodist-lectures-modal-form {
+        padding: 0 20px 20px;
+    }
+    
+    .methodist-lectures-modal-actions {
+        flex-direction: column;
+    }
+}
+
+body.dark-theme .methodist-lectures-card,
+body.dark-theme .methodist-lectures-sidebar-card {
+    background: rgba(26, 31, 46, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .methodist-lectures-form-input,
+body.dark-theme .methodist-lectures-form-textarea {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #e8eaf6;
+}
+
+body.dark-theme .methodist-lectures-modal-content {
+    background: rgba(26, 31, 46, 0.95);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+</style>
+
+<script>
+function methodistEditLecture(id) {
+    document.getElementById('methodist-edit-modal-' + id).style.display = 'block';
+}
+
+function methodistCloseModal(id) {
+    document.getElementById('methodist-edit-modal-' + id).style.display = 'none';
+}
+
+function methodistUpdateFileName(input, textElementId) {
+    const fileText = document.getElementById(textElementId);
+    const selectedFileContainer = input.id === 'lectureDocument' 
+        ? document.getElementById('lectureSelectedFile')
+        : document.getElementById('editLectureSelectedFile-' + input.id.split('-')[1]);
+    
+    const fileName = input.files[0] ? input.files[0].name : '';
+    
+    if (fileName) {
+        fileText.textContent = 'Файл выбран';
+        selectedFileContainer.style.display = 'flex';
+        selectedFileContainer.querySelector('.methodist-lectures-file-name').textContent = fileName;
+    } else {
+        fileText.textContent = input.id === 'lectureDocument' 
+            ? 'Выберите PDF-документ' 
+            : 'Выберите новый PDF-документ';
+        selectedFileContainer.style.display = 'none';
+    }
+}
+
+function methodistRemoveFile(inputId, textElementId, containerId) {
+    const input = document.getElementById(inputId);
+    const fileText = document.getElementById(textElementId);
+    const container = document.getElementById(containerId);
+    
+    input.value = '';
+    fileText.textContent = inputId === 'lectureDocument' 
+        ? 'Выберите PDF-документ' 
+        : 'Выберите новый PDF-документ';
+    container.style.display = 'none';
+}
+
+window.onclick = function(e) {
+    if (e.target.classList.contains('methodist-lectures-modal')) {
+        e.target.style.display = 'none';
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.methodist-lectures-modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+});
+</script>
+{% endblock %}

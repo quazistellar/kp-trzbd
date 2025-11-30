@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Логи изменений{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin_logs.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="log-panel">
+        <div class="log-container">
+            <h1>Логи изменений</h1>
+            <p>Журнал действий в системе</p>
+
+         <div class="filters-logs">
+    <form method="get">
+        <label for="action_filter">Действие:</label>
+        <select name="action_filter" id="action_filter" class="select-filter-logs">
+            <option value="all">Все</option>
+            <option value="1" {% if action_filter == '1' %}selected{% endif %}>Добавлено</option>
+            <option value="2" {% if action_filter == '2' %}selected{% endif %}>Изменено</option>
+            <option value="3" {% if action_filter == '3' %}selected{% endif %}>Удалено</option>
+        </select>
+
+        <label for="time_sort">Сортировка по времени:</label>
+        <select name="time_sort" id="time_sort" class="select-filter-logs">
+            <option value="newest">Недавние</option>
+            <option value="oldest" {% if time_sort == 'oldest' %}selected{% endif %}>Старые</option>
+        </select>
+
+        <label for="date_filter">Дата:</label>
+        <input type="date" name="date_filter" id="date_filter" value="{{ date_filter }}" class="select-filter-logs">
+
+        <button type="submit" class="btn-details">Применить</button>
+    </form>
+</div>
+
+            <div class="log-table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Время действия</th>
+                            <th>Пользователь</th>
+                            <th>Приложение</th>
+                            <th>Модель</th>
+                            <th>ID объекта</th>
+                            <th>Тип действия</th>
+                            <th>Сообщение об изменении</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            <tr>
+                                <td>{{ log.action_time|date:'d.m.Y H:i' }}</td>
+                                <td>{{ log.user }}</td>
+                                                                <td>{{ log.content_type.app_label }}</td>
+                                <td>{{ log.content_type.model }}</td>
+                                <td>{{ log.object_id }}</td>
+                                <td>
+                                    {% if log.action_flag == 1 %}
+                                        <span class="action-add">Добавлено</span>
+                                    {% elif log.action_flag == 2 %}
+                                        <span class="action-change">Изменено</span>
+                                    {% elif log.action_flag == 3 %}
+                                        <span class="action-delete">Удалено</span>
+                                    {% endif %}
+                                </td>
+                                <td class="change-message">
+                                    {% if log.action_flag == 1 %}
+                                        Добавлена новая запись: {{ log.change_message }}
+                                    {% elif log.action_flag == 2 %}
+                                        Изменена существующая запись: {{ log.change_message }}
+                                    {% elif log.action_flag == 3 %}
+                                        Была удалена запись: {{ log.change_message }}
+                                    {% else %}
+                                        {{ log.change_message }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="no-logs">Нет доступных логов.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+             <div class="pagination">
+            <span class="step-links">
+                {% if logs.has_previous %}
+                                    <a href="?page=1{% if request.GET.action_filter %}&action_filter={{ request.GET.action_filter }}{% endif %}{% if request.GET.time_sort %}&time_sort={{ request.GET.time_sort }}{% endif %}{% if request.GET.date_filter %}&date_filter={{ request.GET.date_filter }}{% endif %}">&laquo; Первая</a>
+                    <a href="?page={{ logs.previous_page_number }}{% if request.GET.action_filter %}&action_filter={{ request.GET.action_filter }}{% endif %}{% if request.GET.time_sort %}&time_sort={{ request.GET.time_sort }}{% endif %}{% if request.GET.date_filter %}&date_filter={{ request.GET.date_filter }}{% endif %}">Предыдущая</a>
+                {% endif %}
+
+                <span class="current">
+                    Страница {{ logs.number }} из {{ logs.paginator.num_pages }}.
+                </span>
+
+                {% if logs.has_next %}
+                    <a href="?page={{ logs.next_page_number }}{% if request.GET.action_filter %}&action_filter={{ request.GET.action_filter }}{% endif %}{% if request.GET.time_sort %}&time_sort={{ request.GET.time_sort }}{% endif %}{% if request.GET.date_filter %}&date_filter={{ request.GET.date_filter }}{% endif %}">Следующая</a>
+                    <a href="?page={{ logs.paginator.num_pages }}{% if request.GET.action_filter %}&action_filter={{ request.GET.action_filter }}{% endif %}{% if request.GET.time_sort %}&time_sort={{ request.GET.time_sort }}{% endif %}{% if request.GET.date_filter %}&date_filter={{ request.GET.date_filter }}{% endif %}">Последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        </div>
+    </section>
+{% endblock %}
+

@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+{{ lecture.lecture_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="lecture-detail-section">
+    <div class="lecture-detail-container">
+        <div class="lecture-header-section">
+            <div class="lecture-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'course_study' lecture.course.id %}">{{ lecture.course.course_name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ lecture.lecture_name }}</span>
+            </div>
+            
+            <div class="lecture-title-section">
+                <div class="lecture-meta">
+                    <span class="lecture-order">Лекция {{ lecture.lecture_order }}</span>
+                    <span class="lecture-course">{{ lecture.course.course_name }}</span>
+                </div>
+                <h1 class="lecture-title">{{ lecture.lecture_name }}</h1>
+            </div>
+        </div>
+
+        <div class="lecture-content">
+            <aside class="lecture-sidebar">
+                <div class="navigation-card">
+                    <h3>Навигация</h3>
+                    <div class="nav-buttons">
+                        {% if prev_lecture %}
+                        <a href="{% url 'lecture_detail' prev_lecture.id %}" class="study-btn study-btn-outline">
+                            <i class="fas fa-arrow-left"></i>
+                            Предыдущая лекция
+                        </a>
+                        {% endif %}
+                        
+                        {% if next_lecture %}
+                        <a href="{% url 'lecture_detail' next_lecture.id %}" class="study-btn study-btn-primary">
+                            Следующая лекция
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'course_study' lecture.course.id %}" class="study-btn study-btn-outline">
+                            <i class="fas fa-arrow-left"></i>
+                            Вернуться к курсу
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if lecture.lecture_document_path %}
+                <div class="materials-card">
+                    <h3>Материалы</h3>
+                    <a href="{{ lecture.lecture_document_path.url }}" class="download-link" download>
+                        <i class="fas fa-download"></i>
+                        Скачать материалы
+                    </a>
+                </div>
+                {% endif %}
+
+            </aside>
+
+            <main class="lecture-main">
+                <div class="lecture-text-content">
+                    {{ lecture.lecture_content|linebreaks }}
+                </div>
+                
+                <div class="lecture-footer-nav">
+                    {% if prev_lecture %}
+                    <a href="{% url 'lecture_detail' prev_lecture.id %}" class="footer-nav-btn">
+                        <span class="nav-arrow"><i class="fas fa-arrow-left"></i></span>
+                        <div class="nav-info">
+                            <span class="nav-label">Предыдущая</span>
+                            <span class="nav-title">{{ prev_lecture.lecture_name }}</span>
+                        </div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if next_lecture %}
+                    <a href="{% url 'lecture_detail' next_lecture.id %}" class="footer-nav-btn footer-nav-next">
+                        <div class="nav-info">
+                            <span class="nav-label">Следующая</span>
+                            <span class="nav-title">{{ next_lecture.lecture_name }}</span>
+                        </div>
+                        <span class="nav-arrow"><i class="fas fa-arrow-right"></i></span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'course_study' lecture.course.id %}" class="footer-nav-btn">
+                        <span class="nav-arrow"><i class="fas fa-arrow-left"></i></span>
+                        <div class="nav-info">
+                            <span class="nav-label">Вернуться к курсу</span>
+                            <span class="nav-title">{{ lecture.course.course_name }}</span>
+                        </div>
+                    </a>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+</section>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: transparent;
+}
+
+.lecture-detail-section {
+    padding: 0;
+    min-height: 100vh;
+}
+
+.lecture-detail-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.lecture-header-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.lecture-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+}
+
+.lecture-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+}
+
+.lecture-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.lecture-title-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.lecture-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.lecture-order {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    background: rgba(160, 32, 240, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(160, 32, 240, 0.4);
+}
+
+.lecture-course {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(191, 195, 247, 0.3);
+}
+
+.lecture-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: clamp(2em, 5vw, 2.5em);
+    color: #FFFFFF;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.lecture-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.lecture-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: sticky;
+    top: 20px;
+}
+
+.navigation-card,
+.materials-card,
+.progress-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.navigation-card h3,
+.materials-card h3,
+.progress-card h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.nav-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.study-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+    justify-content: center;
+    text-align: center;
+}
+
+.study-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.study-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.study-btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.download-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    color: #BFC3F7;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.download-link:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.progress-info {
+    text-align: center;
+}
+
+.progress-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-completed {
+    color: #4CAF50;
+    font-size: 1.2em;
+}
+
+.progress-status span {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.lecture-main {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 40px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    min-height: 500px;
+}
+
+.lecture-text-content {
+    color: #FFFFFF;
+    line-height: 1.8;
+    font-size: 1.1em;
+}
+
+.lecture-text-content p {
+    margin-bottom: 1.5em;
+}
+
+.lecture-text-content h2 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 2em 0 1em 0;
+    border-bottom: 2px solid #A020F0;
+    padding-bottom: 10px;
+}
+
+.lecture-text-content h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #BFC3F7;
+    margin: 1.5em 0 1em 0;
+}
+
+.lecture-text-content ul,
+.lecture-text-content ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.lecture-text-content li {
+    margin-bottom: 0.5em;
+}
+
+.lecture-text-content strong {
+    color: #A020F0;
+}
+
+.lecture-footer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.footer-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: rgba(191, 195, 247, 0.1);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    border-radius: 10px;
+    text-decoration: none;
+    flex: 1;
+    max-width: 300px;
+}
+
+.footer-nav-next {
+    flex-direction: row-reverse;
+}
+
+.footer-nav-btn:hover {
+    background: rgba(123, 127, 213, 0.2);
+}
+
+.nav-arrow {
+    color: #A020F0;
+    font-size: 1.1em;
+}
+
+.nav-info {
+    flex: 1;
+}
+
+.nav-label {
+    display: block;
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    margin-bottom: 4px;
+}
+
+.nav-title {
+    display: block;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+@media (max-width: 1024px) {
+    .lecture-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .lecture-sidebar {
+        position: static;
+    }
+    
+    .nav-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .study-btn {
+        flex: 1;
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 768px) {
+    .lecture-title-section {
+        text-align: center;
+    }
+    
+    .lecture-meta {
+        justify-content: center;
+    }
+    
+    .lecture-main {
+        padding: 25px;
+    }
+    
+    .lecture-footer-nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .footer-nav-btn {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .lecture-breadcrumb,
+    .lecture-title-section,
+    .lecture-content {
+        padding: 0 15px;
+    }
+    
+    .lecture-header-section {
+        padding: 20px 0;
+    }
+    
+    .lecture-title {
+        font-size: 1.8em;
+    }
+    
+    .lecture-main {
+        padding: 20px;
+    }
+    
+    .lecture-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .nav-buttons {
+        flex-direction: column;
+    }
+}
+
+.study-btn,
+.download-link,
+.footer-nav-btn,
+.progress-status {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.study-btn:hover,
+.download-link:hover,
+.footer-nav-btn:hover {
+    transform: none !important;
+}
+
+.study-btn-primary:hover,
+.study-btn-outline:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.lecture-title {
+    text-shadow: none !important;
+}
+
+.lecture-detail-section,
+.lecture-detail-container,
+.lecture-content {
+    background: transparent !important;
+}
+
+.navigation-card,
+.materials-card,
+.progress-card,
+.lecture-main {
+    background: rgba(21, 29, 73, 0.95) !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(123, 127, 213, 0.3) !important;
+}
+</style>
+{% endblock %}

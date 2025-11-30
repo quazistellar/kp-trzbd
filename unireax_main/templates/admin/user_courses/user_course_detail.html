@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Запись слушателя на курс{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о записи на курс</h1>
+        
+        <div class="user-detail-card">
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                    <p><strong>ID:</strong> {{ user_course_obj.id }}</p>
+                    <p><strong>Пользователь:</strong> 
+                        {{ user_course_obj.user.last_name }} {{ user_course_obj.user.first_name }}
+                        {% if user_course_obj.user.patronymic %}{{ user_course_obj.user.patronymic }}{% endif %}
+                    </p>
+                    <p><strong>Email:</strong> {{ user_course_obj.user.email }}</p>
+                    <p><strong>Курс:</strong> {{ user_course_obj.course.course_name }}</p>
+                    <p><strong>Категория курса:</strong> {{ user_course_obj.course.course_category.course_category_name }}</p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Даты</h3>
+                    <p><strong>Дата регистрации:</strong> {{ user_course_obj.registration_date|date:'d.m.Y' }}</p>
+                    <p><strong>Дата оплаты:</strong> {{ user_course_obj.payment_date|date:'d.m.Y'|default:"Не оплачено" }}</p>
+                    <p><strong>Дата завершения:</strong> {{ user_course_obj.completion_date|date:'d.m.Y'|default:"Не завершено" }}</p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Статусы</h3>
+                    <p><strong>Статус курса:</strong> 
+                        {% if user_course_obj.status_course %}
+                            <span class="user-status-verified">Завершён</span>
+                        {% else %}
+                            <span class="user-status-pending">В процессе</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Активность:</strong> 
+                        {% if user_course_obj.is_active %}
+                            <span class="user-status-active">Активен</span>
+                        {% else %}
+                            <span class="user-status-inactive">Неактивен</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Цена курса:</strong> 
+                        {% if user_course_obj.course_price %}
+                            {{ user_course_obj.course_price }} ₽
+                        {% else %}
+                            {{ user_course_obj.course.course_price|default:"Бесплатно" }} ₽
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-detail-actions">
+            <a href="{% url 'create_update_user_course' user_course_obj.id %}" class="user-action-edit">Редактировать запись</a>
+            <a href="{% url 'delete_user_course' user_course_obj.id %}" class="user-action-delete">Удалить запись</a>
+            <a href="{% url 'user_course_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

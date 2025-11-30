@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Удаление пользователя{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Удаление пользователя</h1>
+        
+        <div class="user-delete-card">
+            <div class="user-delete-content">
+                <h2 class="user-delete-warning">Внимание!</h2>
+                <p>Вы собираетесь удалить пользователя:</p>
+                <p class="user-delete-name">
+                    {{ user_obj.last_name }} {{ user_obj.first_name }}
+                </p>
+                <p>Email: {{ user_obj.email }}</p>
+                <p>Роль: {{ user_obj.role.role_name }}</p>
+                
+                <div class="user-delete-alert">
+                    <p>⚠️ Это действие нельзя отменить!</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="user-delete-actions">
+                    <button type="submit" class="user-delete-confirm">
+                        Да, удалить пользователя
+                    </button>
+                    <a href="{% url 'user_detail' user_obj.id %}" class="user-delete-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

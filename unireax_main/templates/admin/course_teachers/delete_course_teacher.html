@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Удаление назначения преподавателя{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Удаление назначения преподавателя</h1>
+        
+        <div class="user-delete-card">
+            <div class="user-delete-content">
+                <h2 class="user-delete-warning">Внимание!</h2>
+                <p>Вы собираетесь удалить назначение преподавателя на курс:</p>
+                <p class="user-delete-name">
+                    {{ course_teacher_obj.teacher.last_name }} {{ course_teacher_obj.teacher.first_name }}
+                </p>
+                <p>Курс: {{ course_teacher_obj.course.course_name }}</p>
+                <p>Дата начала: {{ course_teacher_obj.start_date|date:'d.m.Y' }}</p>
+                
+                <div class="user-delete-alert">
+                    <p>⚠️ Это действие нельзя отменить!</p>
+                    <p>Преподаватель будет удалён с курса, и все связанные данные будут утеряны.</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="user-delete-actions">
+                    <button type="submit" class="user-delete-confirm">
+                        Да, удалить назначение
+                    </button>
+                    <a href="{% url 'course_teacher_detail' course_teacher_obj.id %}" class="user-delete-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

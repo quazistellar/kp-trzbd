@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Управление преподавателями курсов{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Управление преподавателями курсов</h1>
+        <p class="users-subtitle">Список всех назначений преподавателей на курсы</p>
+
+        <div class="users-filters-section">
+            <form method="get" class="users-filter-form">
+                <div class="users-search-bar">
+                    <input type="text" name="search" placeholder="Поиск по ФИО, email, курсу..." value="{{ search_query }}">
+                </div>
+                <select name="course_filter" class="users-select-filter">
+                    <option value="">Все курсы</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if course_filter == course.id|stringformat:"i" %}selected{% endif %}>
+                            {{ course.course_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="status_filter" class="users-select-filter">
+                    <option value="">Все статусы</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Активные</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Неактивные</option>
+                </select>
+                <button type="submit" class="users-filter-btn">Применить</button>
+                <a href="{% url 'course_teacher_list' %}" class="users-reset-btn">Сбросить</a>
+            </form>
+        </div>
+
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Преподаватель</th>
+                        <th>Курс</th>
+                        <th>Дата начала</th>
+                        <th>Статус</th>
+                        <th>Категория курса</th>
+                        <th>Тип курса</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course_teacher in course_teachers %}
+                    <tr>
+                        <td>{{ course_teacher.id }}</td>
+                        <td>
+                            {{ course_teacher.teacher.last_name }} {{ course_teacher.teacher.first_name }}
+                            {% if course_teacher.teacher.patronymic %}{{ course_teacher.teacher.patronymic }}{% endif %}
+                            <br><small>{{ course_teacher.teacher.email }}</small>
+                        </td>
+                        <td>{{ course_teacher.course.course_name }}</td>
+                        <td>{{ course_teacher.start_date|date:'d.m.Y' }}</td>
+                        <td>
+                            {% if course_teacher.is_active %}
+                                <span class="user-status-active">Активен</span>
+                            {% else %}
+                                <span class="user-status-inactive">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ course_teacher.course.course_category.course_category_name }}</td>
+                        <td>{{ course_teacher.course.course_type.course_type_name }}</td>
+                        <td>
+                            <div class="users-actions">
+                                <a href="{% url 'course_teacher_detail' course_teacher.id %}" class="users-action-view">Просмотр</a>
+                                <a href="{% url 'create_update_course_teacher' course_teacher.id %}" class="users-action-edit">Изменить</a>
+                                <a href="{% url 'delete_course_teacher' course_teacher.id %}" class="users-action-delete">Удалить</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="users-no-data">Назначения преподавателей на курсы не найдены.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="users-add-section">
+            <a href="{% url 'create_update_course_teacher' %}" class="users-add-btn">Назначить преподавателя на курс</a>
+        </div>
+
+        {% if course_teachers.has_other_pages %}
+        <div class="users-pagination">
+            <span class="users-pagination-links">
+                {% if course_teachers.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}">&laquo; Первая</a>
+                    <a href="?page={{ course_teachers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}">Предыдущая</a>
+                {% endif %}
+
+                <span class="users-pagination-current">
+                    Страница {{ course_teachers.number }} из {{ course_teachers.paginator.num_pages }}.
+                </span>
+
+                {% if course_teachers.has_next %}
+                    <a href="?page={{ course_teachers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}">Следующая</a>
+                    <a href="?page={{ course_teachers.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if course_filter %}&course_filter={{ course_filter }}{% endif %}{% if status_filter %}&status_filter={{ status_filter }}{% endif %}">Последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

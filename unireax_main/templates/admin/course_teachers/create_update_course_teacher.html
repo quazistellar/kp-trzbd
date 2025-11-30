@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+    {% if course_teacher_obj %}Редактирование назначения{% else %}Назначение преподавателя на курс{% endif %}
+{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">{% if course_teacher_obj %}Редактирование назначения преподавателя{% else %}Назначение преподавателя на курс{% endif %}</h1>
+        
+        <div class="user-form-card">
+            <form method="post" class="user-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="user-form-error">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="user-form-row">
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.teacher.label }} *</label>
+                        {{ form.teacher }}
+                        {% if form.teacher.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.teacher.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="user-form-help-text">
+                            Только пользователи с ролью "Преподаватель"
+                        </div>
+                    </div>
+                    
+                    <div class="user-form-field">
+                        <label class="user-form-label">{{ form.course.label }} *</label>
+                        {{ form.course }}
+                        {% if form.course.errors %}
+                        <div class="user-form-field-error">
+                            {{ form.course.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="user-form-field">
+                    <label class="user-form-label">{{ form.start_date.label }}</label>
+                    {{ form.start_date }}
+                    <div class="user-form-help-text">
+                        По умолчанию: сегодняшняя дата
+                    </div>
+                </div>
+                
+                <div class="user-form-checkboxes">
+                    <label class="user-form-checkbox-label">
+                        {{ form.is_active }}
+                        <span class="user-form-checkbox-custom"></span>
+                        Активное назначение
+                    </label>
+                </div>
+
+                <div class="user-form-actions">
+                    <button type="submit" class="user-form-submit">
+                        {% if course_teacher_obj %}Обновить{% else %}Назначить{% endif %} преподавателя
+                    </button>
+                    <a href="{% if course_teacher_obj %}{% url 'course_teacher_detail' course_teacher_obj.id %}{% else %}{% url 'course_teacher_list' %}{% endif %}" class="user-form-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Курс: {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о курсе</h1>
+        
+        <div class="user-detail-card">
+            <div class="course-header">
+                {% if course.course_photo_path %}
+                <div class="course-photo">
+                    <img src="{{ course.course_photo_path.url }}" alt="{{ course.course_name }}" class="course-detail-photo">
+                </div>
+                {% endif %}
+                <div class="course-title-section">
+                    <h2>{{ course.course_name }}</h2>
+                    <div class="course-meta">
+                        <span class="course-category">{{ course.course_category.course_category_name }}</span>
+                        <span class="course-type">{{ course.course_type.course_type_name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                    <p><strong>ID:</strong> {{ course.id }}</p>
+                    <p><strong>Название:</strong> {{ course.course_name }}</p>
+                    <p><strong>Описание:</strong> {{ course.course_description|default:"Не указано" }}</p>
+                    <p><strong>Код комнаты:</strong> {{ course.code_room|default:"Не указан" }}</p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Детали курса</h3>
+                    <p><strong>Цена:</strong> 
+                        {% if course.course_price %}
+                            {{ course.course_price }} ₽
+                        {% else %}
+                            Бесплатно
+                        {% endif %}
+                    </p>
+                    <p><strong>Количество часов:</strong> {{ course.course_hours }} ч</p>
+                    <p><strong>Максимум мест:</strong> {{ course.course_max_places|default:"Не ограничено" }}</p>
+                    <p><strong>Сертификат:</strong> 
+                        {% if course.has_certificate %}
+                            <span class="user-status-active">✓ Да</span>
+                        {% else %}
+                            <span class="user-status-pending">⏳ Нет</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Статусы</h3>
+                    <p><strong>Активен:</strong> 
+                        {% if course.is_active %}
+                            <span class="user-status-active">✓ Да</span>
+                        {% else %}
+                            <span class="user-status-inactive">✗ Нет</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Завершён:</strong> 
+                        {% if course.is_completed %}
+                            <span class="user-status-completed">✓ Да</span>
+                        {% else %}
+                            <span class="user-status-pending">⏳ Нет</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Создание</h3>
+                    <p><strong>Создал:</strong> 
+                        {% if course.created_by %}
+                            {{ course.created_by.get_full_name|default:course.created_by.username }}
+                        {% else %}
+                            Администратор
+                        {% endif %}
+                    </p>                    
+                    <p><strong>Дата создания:</strong> {{ course.created_at|date:'d.m.Y H:i' }}</p>
+                    <p><strong>Дата обновления:</strong> {{ course.updated_at|date:'d.m.Y H:i' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-detail-actions">
+            <a href="{% url 'update_course' course.id %}" class="user-action-edit">Редактировать курс</a>
+            <a href="{% url 'delete_course' course.id %}" class="user-action-delete">Удалить курс</a>
+            <a href="{% url 'course_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

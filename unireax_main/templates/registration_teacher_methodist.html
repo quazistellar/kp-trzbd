@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Регистрация преподавателя/методиста - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="background-elements">
+    </div>
+    <div class="container-fluid">
+        <div class="row justify-content-center min-vh-100">
+            <div class="col-12 col-md-8 col-lg-6 auth-column">
+                <div class="auth-container">
+                    <h1 class="auth-title">Регистрация</h1>
+                    <p class="auth-subtitle">Присоединяйтесь к UNIREAX как преподаватель или методист!</p>
+                    
+                    {% if form.non_field_errors %}
+                        <div class="auth-error">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if messages %}
+                        <div class="auth-success">
+                            {% for message in messages %}
+                                <p class="mb-1">{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" class="auth-form" id="registrationForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="username" class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                                   placeholder="Имя пользователя" required value="{{ form.username.value|default:'' }}">
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-white-muted">Ваше отображаемое имя, не более 150 символов.</small>
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="first_name" class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
+                                   placeholder="Имя" required value="{{ form.first_name.value|default:'' }}">
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="last_name" class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
+                                   placeholder="Фамилия" required value="{{ form.last_name.value|default:'' }}">
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="patronymic" class="form-control {% if form.patronymic.errors %}is-invalid{% endif %}" 
+                                   placeholder="Отчество (если его нет - оставьте поле пустым)" value="{{ form.patronymic.value|default:'' }}">
+                            {% if form.patronymic.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.patronymic.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="email" name="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
+                                   placeholder="Почта" required value="{{ form.email.value|default:'' }}">
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-white-muted">Введите свою почту, к которой имеете постоянный доступ.</small>
+                        </div>
+                        
+                        <div class="role-selection mb-4">
+                            <label class="form-label text-white mb-3 fw-bold">Кем вы хотите стать? *</label>
+                            
+                            {% if form.role_choice.errors %}
+                                <div class="alert alert-danger mb-3">
+                                    <strong>Ошибка!</strong> {{ form.role_choice.errors.0 }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="role-options">
+                                <div class="role-option mb-2">
+                                    <label class="role-label">
+                                        <input type="radio" name="role_choice" value="teacher" class="role-radio" 
+                                               {% if form.role_choice.value == 'teacher' %}checked{% endif %}>
+                                        <span class="role-custom-radio"></span>
+                                        <span class="role-text">Преподаватель</span>
+                                    </label>
+                                    <small class="form-text text-white-muted d-block ms-4">
+                                        Проведение учебных курсов, проверка работ слушателей, создание классной комнаты для своих учеников. Для записи в качестве преподавателя на курс обращайтесь к администратору.
+                                    </small>
+                                </div>
+                                
+                                <div class="role-option">
+                                    <label class="role-label">
+                                        <input type="radio" name="role_choice" value="methodist" class="role-radio"
+                                               {% if form.role_choice.value == 'methodist' %}checked{% endif %}>
+                                        <span class="role-custom-radio"></span>
+                                        <span class="role-text">Методист</span>
+                                    </label>
+                                    <small class="form-text text-white-muted d-block ms-4">
+                                        Разработка курсов и учебных материалов, включая тесты, лекции и практические работы. Вы можете обратиться к администратору для добавления преподавателей на ваш курс.
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div id="role-error-message" class="alert alert-danger mt-2" style="display: none;">
+                                <strong>Внимание!</strong> Пожалуйста, выберите одну роль - преподаватель или методист
+                            </div>
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="position" class="form-control {% if form.position.errors %}is-invalid{% endif %}" 
+                                   placeholder="Должность по месту работы" required value="{{ form.position.value|default:'' }}">
+                            {% if form.position.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.position.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="text" name="educational_institution" class="form-control {% if form.educational_institution.errors %}is-invalid{% endif %}" 
+                                   placeholder="Учебное заведение, в котором вы работаете" required value="{{ form.educational_institution.value|default:'' }}">
+                            {% if form.educational_institution.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.educational_institution.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <label class="form-label text-white">Справка с места работы/документ об образовании *</label>
+                            <input type="file" name="certificat_from_the_place_of_work_path" 
+                                   class="form-control {% if form.certificat_from_the_place_of_work_path.errors %}is-invalid{% endif %}" 
+                                   accept=".jpg,.jpeg,.png,.pdf" required>
+                            {% if form.certificat_from_the_place_of_work_path.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.certificat_from_the_place_of_work_path.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-white-muted">Вы должны прикрепить справку с места работы, которая подтвердит факт вашей профессиональной компетентности. Форматы: JPG, PNG, PDF. Максимальный размер: 10 МБ</small>
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="password" name="password1" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
+                                   placeholder="Пароль" required>
+                            {% if form.password1.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password1.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-white-muted">Пароль должен содержать минимум 8 символов, включая хотя бы одну заглавную букву, один специальный символ и цифру</small>
+                        </div>
+                        
+                        <div class="auth-field mb-3">
+                            <input type="password" name="password2" class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
+                                   placeholder="Подтвердите пароль" required>
+                            {% if form.password2.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password2.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="auth-checkbox-wrapper mb-3" id="checkboxWrapper">
+                            <label class="auth-checkbox-label">
+                                <input type="checkbox" name="accept_policies" id="accept_policies" required
+                                       {% if form.accept_policies.value %}checked{% endif %}
+                                       class="{% if form.accept_policies.errors %}is-invalid{% endif %}">
+                                <span class="checkmark"></span>
+                                <span class="checkbox-text">
+                                    Нажимая на кнопку "Зарегистрироваться", вы даёте своё согласие на 
+                                    <a href="{% url 'privacy_notice' %}" class="policy-link" target="_blank"><u>использование ваших персональных данных</u></a> 
+                                    в соответствие с Федеральным законом от 27.07.2006 №152-ФЗ «О персональных данных»
+                                    и соглашаетесь с <a href="{% url 'site_policy' %}" class="policy-link" target="_blank"><u>политикой ресурса Unireax</u></a>
+                                </span>
+                            </label>
+                            {% if form.accept_policies.errors %}
+                                <div class="invalid-feedback d-block" id="policy-error">
+                                    {% for error in form.accept_policies.errors %}
+                                        {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div id="checkbox-error-message" class="alert alert-danger mb-3" style="display: none;">
+                            <strong>Ошибка!</strong> Чтобы стать частью Unireax, вам нужно поставить галочку в пункте выше
+                        </div>
+
+                        <button type="submit" class="auth-button btn">Зарегистрироваться</button>
+                    </form>
+
+                    <div class="auth-links mt-3 d-flex flex-column align-items-center">
+                        <a href="{% url 'auth' %}" class="d-block">Уже есть аккаунт?</a>
+                        <a href="{% url 'register_teacher_methodist' %}" class="mb-2">Я хочу стать слушателем курсов</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registrationForm');
+    const checkbox = document.getElementById('accept_policies');
+    const errorMessage = document.getElementById('checkbox-error-message');
+    const checkboxWrapper = document.getElementById('checkboxWrapper');
+    const roleRadios = document.querySelectorAll('input[name="role_choice"]');
+    const roleErrorMessage = document.getElementById('role-error-message');
+    
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    function isRoleSelected() {
+        return Array.from(roleRadios).some(radio => radio.checked);
+    }
+    
+    if (submitButton) {
+        submitButton.addEventListener('click', function(e) {
+            let hasError = false;
+            
+            if (!checkbox.checked) {
+                e.preventDefault();
+                hasError = true;
+                
+                if (errorMessage) {
+                    errorMessage.style.display = 'block';
+                }
+                
+                if (checkboxWrapper) {
+                    checkboxWrapper.classList.add('checkbox-error');
+                }
+            }
+            
+            if (!isRoleSelected()) {
+                e.preventDefault();
+                hasError = true;
+                
+                if (roleErrorMessage) {
+                    roleErrorMessage.style.display = 'block';
+                }
+            }
+            
+            if (hasError) {
+                const firstError = document.querySelector('.alert-danger[style="display: block;"]');
+                if (firstError) {
+                    firstError.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    
+                    firstError.style.animation = 'shake 0.5s ease-in-out';
+                    setTimeout(() => {
+                        firstError.style.animation = '';
+                    }, 500);
+                }
+            }
+        });
+    }
+    
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (roleErrorMessage) {
+                roleErrorMessage.style.display = 'none';
+            }
+        });
+    });
+    
+    if (checkbox) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked && errorMessage) {
+                errorMessage.style.display = 'none';
+                if (checkboxWrapper) {
+                    checkboxWrapper.classList.remove('checkbox-error');
+                }
+            }
+        });
+    }
+    
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (checkbox.checked && isRoleSelected()) {
+                const submitButton = document.querySelector('.auth-button');
+                if (submitButton) {
+                    submitButton.classList.add('loading');
+                }
+            }
+        });
+    }
+    
+    const authButton = document.querySelector('.auth-button');
+    if (authButton) {
+        authButton.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
+        });
+        
+        authButton.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+        
+        authButton.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(0)';
+        });
+        
+        authButton.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+    }
+});
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    .role-selection {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .role-options {
+        margin-left: 10px;
+    }
+    
+    .role-label {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+        margin-bottom: 5px;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .role-label:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .role-radio {
+        display: none;
+    }
+    
+    .role-custom-radio {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        margin-right: 10px;
+        position: relative;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    .role-radio:checked + .role-custom-radio::after {
+        content: '';
+        width: 10px;
+        height: 10px;
+        background: #fff;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .role-text {
+        font-weight: 500;
+        color: white;
+    }
+    
+    .role-option {
+        margin-bottom: 15px;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

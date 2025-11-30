@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Удаление курса{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Удаление курса</h1>
+        
+        <div class="user-delete-card">
+            <div class="user-delete-content">
+                <h2 class="user-delete-warning">Внимание!</h2>
+                <p>Вы собираетесь удалить курс:</p>
+                <p class="user-delete-name">
+                    {{ course_obj.course_name }}
+                </p>
+                <p>Категория: {{ course_obj.course_category.course_category_name }}</p>
+                <p>Тип: {{ course_obj.course_type.course_type_name }}</p>
+                <p>Часы: {{ course_obj.course_hours }} ч</p>
+                <p>Создал: {{ course_obj.created_by.get_full_name|default:course_obj.created_by.username }}</p>
+                
+                <div class="user-delete-alert">
+                    <p>⚠️ Это действие нельзя отменить!</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="user-delete-actions">
+                    <button type="submit" class="user-delete-confirm">
+                        Да, удалить курс
+                    </button>
+                    <a href="{% url 'course_detail' course_obj.id %}" class="user-delete-cancel">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

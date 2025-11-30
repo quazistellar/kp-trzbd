@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}UNIREAX - Каталог курсов{% endblock %}
+
+{% block link_style %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <section class="catalog-section">
+        <h1>Каталог курсов</h1>
+        <p>Найдите и выберите интересующий курс для обучения!</p>
+        <div class="background-elements">
+        </div>
+    </section>
+
+    <section class="filters-section">
+        <form method="GET" class="filter-form" id="filterForm">
+            <div class="search-bar">
+                <input type="text" name="q" value="{{ current_query }}" placeholder="Поиск по названию.." id="searchInput">
+            </div>
+
+            <select name="category" id="categorySelect">
+                <option value="">Все категории</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if current_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.course_category_name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="type" id="typeSelect">
+                <option value="">Все типы</option>
+                {% for typ in types %}
+                    <option value="{{ typ.id }}" {% if current_type == typ.id|stringformat:"s" %}selected{% endif %}>{{ typ.course_type_name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="has_cert" id="certSelect">
+                <option value="">Сертификат: любой</option>
+                <option value="yes" {% if current_has_cert == 'yes' %}selected{% endif %}>С сертификатом</option>
+                <option value="no" {% if current_has_cert == 'no' %}selected{% endif %}>Без сертификата</option>
+            </select>
+
+            <select name="free_only" id="freeSelect">
+                <option value="">Цена: любая</option>
+                <option value="yes" {% if current_free_only == 'yes' %}selected{% endif %}>Только бесплатные</option>
+            </select>
+
+            <input type="number" name="price_min" value="{{ current_price_min }}" placeholder="Мин. цена" id="priceMin">
+            <input type="number" name="price_max" value="{{ current_price_max }}" placeholder="Макс. цена" id="priceMax">
+
+            <select name="sort" id="sortSelect">
+                <option value="">Без сортировки</option>
+                <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Название: A-Я</option>
+                <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Название: Я-A</option>
+                <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                <option value="rating_desc" {% if current_sort == 'rating_desc' %}selected{% endif %}>Рейтинг: по убыванию</option>
+                <option value="hours_asc" {% if current_sort == 'hours_asc' %}selected{% endif %}>Часы: по возрастанию</option>
+                <option value="hours_desc" {% if current_sort == 'hours_desc' %}selected{% endif %}>Часы: по убыванию</option>
+            </select>
+
+            <button type="submit" class="btn-details">Применить</button>
+            <button type="button" class="btn-details" onclick="clearFilters()">Сбросить</button>
+        </form>
+    </section>
+
+    <section class="courses-section">
+        <div class="courses-grid">
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="course-card" data-course-id="{{ course.id }}">
+                        <div class="course-card-image-container">
+                            <img src="{{ course.course_photo_path.url }}" alt="{{ course.course_name }}" class="course-image">
+                            <div class="course-overlay">
+                                <div class="course-card-header">
+                                    <h3 class="course-name">{{ course.course_name }}</h3>
+                                    {% if user.role.role_name == 'слушатель курсов' or user.role.role_name == 'преподаватель' %}
+                                    <button class="btn-favorite {% if course.is_favorite %}active{% endif %}" 
+                                            data-course-id="{{ course.id }}"
+                                            onclick="toggleCourseFavorite(this)">
+                                        <img src="{% static 'icons/icon-heart.png' %}" alt="Добавить в понравившиеся">
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <div class="course-description-container">
+                                    <p class="course-description" data-fulltext="{{ course.course_description }}">
+                                        {{ course.course_description }}
+                                    </p>
+                                </div>
+                                <div class="course-details">
+                                    {% if course.course_price and course.course_price > 0 %}
+                                        <p class="price">{{ course.course_price }} ₽</p>
+                                    {% else %}
+                                        <p class="price">Бесплатный</p>
+                                    {% endif %}
+                                    <a href="{% url 'course_enroll_detail' course.id %}" class="btn-details">Подробнее</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card-footer">
+                            <div class="rating">
+                                <span>{{ course.db_rating|floatformat:1 }} <img src="{% static 'icons/star.png' %}" alt="Рейтинг"></span>
+                                <span>
+                                    {% if course.course_max_places > 0 %}
+                                        {{ course.course_max_places }}
+                                    {% else %}
+                                        ∞
+                                    {% endif %}
+                                    <img src="{% static 'icons/listeners.png' %}" alt="Места">
+                                </span>
+                                <span>{{ course.course_hours }} <img src="{% static 'icons/clock.png' %}" alt="Часы"></span>
+                                {% if course.has_certificate %}
+                                    <span>Сертификат <img src="{% static 'icons/cert.png' %}" alt="Сертификат"></span>
+                                {% endif %}
+                            </div>
+                            <p class="course-category">{{ course.course_category.course_category_name }}, {{ course.course_type.course_type_name }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="course-card empty-card" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; margin: 5px;"> 
+                    <p>По вашему запросу курсов не найдено!</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="hotkey-indicator" title="Нажмите Ctrl для показа/скрытия горячих клавиш">
+        Горячие клавиши - Ctrl
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/truncate-description.js' %}" defer></script>
+    <script src="{% static 'js/fix-scroll.js' %}" defer></script>
+
+    <script>
+        let isHelpVisible = false;
+        let helpElement = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createHelpElement();
+            
+            function initHotkeys() {
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && !e.altKey && !e.shiftKey) {
+                        e.preventDefault();
+                        toggleHelp();
+                        return;
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 'r') {
+                        e.preventDefault();
+                        clearAllFilters();
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 'f') {
+                        e.preventDefault();
+                        const freeSelect = document.getElementById('freeSelect');
+                        freeSelect.value = 'yes';
+                        document.getElementById('filterForm').submit();
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 'c') {
+                        e.preventDefault();
+                        const certSelect = document.getElementById('certSelect');
+                        certSelect.value = 'yes';
+                        document.getElementById('filterForm').submit();
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 't') {
+                        e.preventDefault();
+                        const sortSelect = document.getElementById('sortSelect');
+                        sortSelect.value = 'rating_desc';
+                        document.getElementById('filterForm').submit();
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 'p') {
+                        e.preventDefault();
+                        const sortSelect = document.getElementById('sortSelect');
+                        sortSelect.value = 'price_asc';
+                        document.getElementById('filterForm').submit();
+                    }
+                    
+                    if (e.altKey && e.key.toLowerCase() === 'g') {
+                        e.preventDefault();
+                        const firstCourse = document.querySelector('.course-card:not(.empty-card)');
+                        if (firstCourse) {
+                            firstCourse.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            highlightElement(firstCourse);
+                        }
+                    }
+                    
+                    if (e.altKey && e.key >= '1' && e.key <= '9') {
+                        const index = parseInt(e.key) - 1;
+                        const courseCards = document.querySelectorAll('.course-card:not(.empty-card)');
+                        
+                        if (index < courseCards.length) {
+                            e.preventDefault();
+                            const courseLink = courseCards[index].querySelector('.btn-details');
+                            if (courseLink) {
+                                courseLink.click();
+                            }
+                        }
+                    }
+                    
+                    if (e.key === 'Escape' && isHelpVisible) {
+                        e.preventDefault();
+                        hideHelp();
+                    }
+                });
+            }
+            
+            function createHelpElement() {
+                helpElement = document.createElement('div');
+                helpElement.className = 'hotkey-help';
+                helpElement.innerHTML = `
+                    <div class="hotkey-header">
+                        <span class="hotkey-title">Горячие клавиши каталога</span>
+                        <button class="hotkey-close" onclick="hideHelp()">×</button>
+                    </div>
+                    <div class="hotkey-content">
+                        <div class="hotkey-group">
+                            <div class="hotkey-subtitle">Фильтры</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>R</kbd> - Сбросить все фильтры</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>F</kbd> - Только бесплатные</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>C</kbd> - С сертификатом</div>
+                        </div>
+                        <div class="hotkey-group">
+                            <div class="hotkey-subtitle">Сортировка</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>T</kbd> - По рейтингу</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>P</kbd> - По цене</div>
+                        </div>
+                        <div class="hotkey-group">
+                            <div class="hotkey-subtitle">Навигация</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>G</kbd> - К курсам</div>
+                            <div class="hotkey-item"><kbd>Alt</kbd> + <kbd>1-9</kbd> - Открыть курс</div>
+                        </div>
+                        <div class="hotkey-group">
+                            <div class="hotkey-subtitle">Управление</div>
+                            <div class="hotkey-item"><kbd>Ctrl</kbd> - Показать/скрыть справку</div>
+                            <div class="hotkey-item"><kbd>Esc</kbd> - Скрыть справку</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(helpElement);
+            }
+            
+            window.toggleHelp = function() {
+                if (isHelpVisible) {
+                    hideHelp();
+                } else {
+                    showHelp();
+                }
+            }
+            
+            window.showHelp = function() {
+                if (helpElement) {
+                    helpElement.style.display = 'block';
+                    isHelpVisible = true;
+                }
+            }
+            
+            window.hideHelp = function() {
+                if (helpElement) {
+                    helpElement.style.display = 'none';
+                    isHelpVisible = false;
+                }
+            }
+            
+            window.clearFilters = function() {
+                clearAllFilters();
+            }
+            
+            function clearAllFilters() {
+                window.location.href = "{% url 'catalog' %}";
+            }
+            
+            function highlightElement(element) {
+                element.style.boxShadow = '0 0 0 3px #4a90e2';
+                setTimeout(() => element.style.boxShadow = '', 2000);
+            }
+            
+            initHotkeys();
+        });
+
+        if (typeof toggleCourseFavorite !== 'undefined') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.btn-favorite').forEach(btn => {
+                    const isActive = btn.classList.contains('active');
+                    const img = btn.querySelector('img');
+                    if (img && isActive) {
+                        img.style.filter = 'brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg)';
+                    }
+                });
+            });
+        }
+    </script>
+
+    <style>
+        .hotkey-help {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border: 2px solid #650595ff;
+            border-radius: 15px;
+            padding: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10000;
+            max-width: 450px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+            color: white;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .hotkey-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 20px;
+            border-bottom: 1px solid #9115b0ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hotkey-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #ecf0f1;
+        }
+
+        .hotkey-close {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .hotkey-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hotkey-content {
+            padding: 20px;
+        }
+
+        .hotkey-group {
+            margin-bottom: 20px;
+        }
+
+        .hotkey-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .hotkey-subtitle {
+            font-weight: 600;
+            color: #ffffffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hotkey-item {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            color: #ecf0f1;
+            font-size: 14px;
+        }
+
+        kbd {
+            background: #1a252f;
+            border: 1px solid #39036bff;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            margin-right: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            min-width: 70px;
+            text-align: center;
+            display: inline-block;
+            color: #ffffffff;
+            font-weight: bold;
+        }
+
+        .hotkey-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #6521a9ff, #06427eff);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 9999;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+            font-family: 'Arial Black', sans-serif;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hotkey-indicator:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
+        }
+
+        .btn-clear {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-clear:hover {
+            background: #7f8c8d;
+        }
+
+        .hotkey-help::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
+        }
+    </style>
+{% endblock %}

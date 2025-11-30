@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Оцененные работы - {{ course.course_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="graded-assignments-section">
+    <div class="graded-assignments-container">
+        <div class="graded-header-section">
+            <div class="graded-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'course_study' course.id %}">{{ course.course_name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>Оцененные работы</span>
+            </div>
+            
+            <div class="graded-title-section">
+                <h1 class="graded-title">Оцененные практические работы</h1>
+                <p class="graded-subtitle">{{ course.course_name }}</p>
+            </div>
+        </div>
+
+        <div class="graded-content">
+            {% if graded_assignments %}
+            <div class="assignments-grid">
+                {% for item in graded_assignments %}
+                <div class="assignment-card {% if item.practical.grading_type == 'points' %}assignment-points{% else %}assignment-passfail{% endif %}">
+                    <div class="assignment-header">
+                        <div class="assignment-info">
+                            <span class="assignment-lecture">Лекция {{ item.practical.lecture.lecture_order }}</span>
+                            <h3 class="assignment-name">{{ item.practical.practical_assignment_name }}</h3>
+                        </div>
+                        <div class="assignment-grade">
+                            {% if item.practical.grading_type == 'points' %}
+                            <div class="grade-score">
+                                <span class="score-value">{{ item.feedback.score }}</span>
+                                <span class="score-max">/ {{ item.practical.max_score }}</span>
+                                {% if item.practical.max_score %}
+                                    {% widthratio item.feedback.score item.practical.max_score 100 as percentage %}
+                                    <div class="score-percentage {% if percentage >= 50 %}percentage-passed{% else %}percentage-failed{% endif %}">
+                                        ({{ percentage }}%)
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="grade-status {% if item.feedback.is_passed %}status-passed{% else %}status-failed{% endif %}">
+                                {{ item.feedback.is_passed|yesno:"Зачёт,Незачёт" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="assignment-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Тип оценки:</span>
+                            <span class="meta-value">{{ item.practical.get_grading_type_display }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Дата сдачи:</span>
+                            <span class="meta-value">{{ item.assignment.submission_date|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Попытка:</span>
+                            <span class="meta-value">{{ item.assignment.attempt_number }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Статус:</span>
+                            <span class="meta-value status-badge status-completed">{{ item.assignment.submission_status.assignment_status_name }}</span>
+                        </div>
+                    </div>
+
+                <div class="result-info">
+                    {% if item.practical.grading_type == 'points' and item.practical.max_score and item.percentage is not None %}
+                        {% if item.percentage >= 50 %}
+                        <div class="result-success">
+                            <i class="fas fa-check-circle"></i>
+                            Работа успешно сдана, набрано ({{ item.percentage|floatformat:0 }}% от максимального балла)
+                        </div>
+                        {% else %}
+                        <div class="result-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Работа не набрала минимальный порог, набрано ({{ item.percentage|floatformat:0 }}% от максимального балла)
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        {% if item.feedback.is_passed %}
+                        <div class="result-success">
+                            <i class="fas fa-check-circle"></i>
+                            Работа успешно сдана
+                        </div>
+                        {% else %}
+                        <div class="result-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Работа не сдана
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                    {% if item.feedback.comment_feedback %}
+                    <div class="feedback-section">
+                        <h4>Комментарий преподавателя:</h4>
+                        <div class="feedback-content">
+                            {{ item.feedback.comment_feedback|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="assignment-actions">
+                        <a href="{% url 'course_study' course.id %}" class="btn btn-outline">
+                            К курсу
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-assignments">
+                <div class="no-assignments-content">
+                    <i class="fas fa-clipboard-check no-assignments-icon"></i>
+                    <h3>Оцененных работ пока нет</h3>
+                    <p>После проверки ваших работ преподавателем они появятся здесь</p>
+                    <a href="{% url 'course_study' course.id %}" class="btn btn-primary">
+                        Перейти к практическим работам
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+
+<style>
+body {
+    background-color: #7B7FD5 !important;
+}
+
+.graded-assignments-section {
+    padding: 30px 0;
+    min-height: 100vh;
+}
+
+.graded-assignments-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.graded-header-section {
+    margin-bottom: 40px;
+}
+
+.graded-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.graded-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.graded-breadcrumb a:hover {
+    color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+    color: #7B7FD5;
+}
+
+.graded-title-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.graded-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2.2em;
+    color: #FFFFFF;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.graded-subtitle {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.assignments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+}
+
+.assignment-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    border-left: 5px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.assignment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.assignment-passed {
+    border-left-color: #28a745;
+}
+
+.assignment-failed {
+    border-left-color: #dc3545;
+}
+
+.assignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.assignment-info {
+    flex: 1;
+}
+
+.assignment-lecture {
+    color: #A020F0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.assignment-name {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.3em;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.assignment-grade {
+    flex-shrink: 0;
+}
+
+.grade-score {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.score-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #FFFFFF;
+}
+
+.score-max {
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+    color: #BFC3F7;
+}
+
+.grade-status {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.status-passed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.status-failed {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.assignment-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.meta-label {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+}
+
+.meta-value {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    background: rgba(123, 127, 213, 0.2);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.feedback-section {
+    margin-bottom: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.feedback-section h4 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 10px 0;
+    font-size: 1em;
+}
+
+.feedback-content {
+    color: #FFFFFF;
+    line-height: 1.5;
+    background: rgba(191, 195, 247, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #A020F0;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.btn-outline:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(160, 32, 240, 0.4);
+}
+
+.no-assignments {
+    text-align: center;
+    padding: 80px 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.no-assignments-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.no-assignments-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.no-assignments h3 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 10px 0;
+    font-size: 1.3em;
+}
+
+.no-assignments p {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 25px 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .assignments-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignment-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .assignment-grade {
+        align-self: flex-start;
+    }
+    
+    .assignment-meta {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignment-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .graded-assignments-container {
+        padding: 0 15px;
+    }
+    
+    .graded-title {
+        font-size: 1.8em;
+    }
+    
+    .assignment-card {
+        padding: 20px;
+    }
+}
+
+body.dark-theme .graded-title-section,
+body.dark-theme .assignment-card,
+body.dark-theme .no-assignments {
+    background: rgba(26, 31, 46, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .assignment-meta,
+body.dark-theme .feedback-content {
+    background: rgba(99, 102, 241, 0.1);
+}
+</style>
+{% endblock %}

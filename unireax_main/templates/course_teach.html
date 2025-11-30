@@ -1,0 +1,1204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Преподавание: {{ course.course_name }} - UNIREAX
+{% endblock %}
+
+{% block content %}
+<section class="course-teach-section">
+    <div class="course-teach-container">
+        <div class="course-teach-header">
+            <div class="course-teach-breadcrumb">
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>Преподавание: {{ course.course_name }}</span>
+            </div>
+            
+            <div class="course-teach-title-section">
+                <h1 class="course-teach-title">{{ course.course_name }}</h1>
+                <div class="course-teach-stats">
+                    <div class="teach-stat">
+                        <span class="stat-value">{{ students_count }}</span>
+                        <span class="stat-label">Слушателей</span>
+                    </div>
+                    <div class="teach-stat">
+                        <span class="stat-value">{{ assignments_to_review }}</span>
+                        <span class="stat-label">На проверке</span>
+                    </div>
+                    <div class="teach-stat">
+                        <span class="stat-value">{{ average_progress|floatformat:0 }}%</span>
+                        <span class="stat-label">Средний прогресс</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="course-teach-content">
+           <aside class="course-teach-sidebar">
+    <nav class="teach-nav">
+        <button class="teach-nav-item active" data-tab="overview">
+            <i class="fas fa-chart-line teach-nav-icon"></i>
+            <span>Обзор</span>
+        </button>
+        <button class="teach-nav-item" data-tab="assignments">
+            <i class="fas fa-tasks teach-nav-icon"></i>
+            <span>Проверка работ</span>
+            {% if assignments_to_review > 0 %}
+            <span class="nav-badge">{{ assignments_to_review }}</span>
+            {% endif %}
+        </button>
+        <button class="teach-nav-item" data-tab="students">
+            <i class="fas fa-users teach-nav-icon"></i>
+            <span>Слушатели</span>
+        </button>
+
+        {% if course.course_type.course_type_name == 'Классная комната' %}
+        <a href="{% url 'methodist_course_constructor' course_id=course.id %}" class="teach-nav-item">
+            <i class="fas fa-cogs teach-nav-icon"></i> 
+            <span>Управление курсом</span>
+        </a>
+        {% endif %}
+    </nav>
+</aside>
+
+
+
+
+
+            <section class="course-teach-main">
+                <div class="teach-tab-content active" id="overview-tab">
+                    <div class="tab-header">
+                        <h2>Обзор курса</h2>
+                        <p>Статистика и основные показатели курса</p>
+                    </div>
+
+                    <div class="overview-stats-grid">
+                        <div class="overview-stat-card stat-primary">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{{ students_count }}</div>
+                                <div class="stat-label">Всего слушателей</div>
+                            </div>
+                        </div>
+
+                        <div class="overview-stat-card stat-success">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{{ active_students }}</div>
+                                <div class="stat-label">Активных слушателей</div>
+                            </div>
+                        </div>
+
+                        <div class="overview-stat-card stat-warning">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{{ assignments_to_review }}</div>
+                                <div class="stat-label">Работ на проверке</div>
+                            </div>
+                        </div>
+
+                        <div class="overview-stat-card stat-info">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{{ average_progress|floatformat:0 }}%</div>
+                                <div class="stat-label">Средний прогресс</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overview-section">
+                        <h3>Прогресс слушателей</h3>
+                        <div class="progress-chart">
+                            {% for student in students_details %}
+                            <div class="student-progress-item">
+                                <div class="student-info">
+                                    <span class="student-name">{{ student.user__last_name }} {{ student.user__first_name }}</span>
+                                    <span class="student-progress">{{ student.progress|floatformat:0 }}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ student.progress|floatformat:0 }}%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="overview-section">
+                        <div class="section-header">
+                            <h3>Сдачи работ</h3>
+                            <a href="#assignments" class="view-all-link" onclick="switchToTab('assignments')">Все работы →</a>
+                        </div>
+                        {% if recent_submissions %}
+                        <div class="recent-submissions">
+                            {% for submission in recent_submissions %}
+                            <div class="submission-item">
+                                <div class="submission-info">
+                                    <div class="student-name">{{ submission.user.last_name }} {{ submission.user.first_name }}</div>
+                                    <div class="assignment-name">{{ submission.practical_assignment.practical_assignment_name }}</div>
+                                    <div class="submission-date">{{ submission.submission_date|date:"d.m.Y H:i" }}</div>
+                                </div>
+                                <div class="submission-actions">
+                                    <a href="{% url 'grade_assignment' submission.id %}" class="teach-btn teach-btn-primary">
+                                        Проверить
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-inbox empty-icon"></i>
+                            <p>Нет новых работ для проверки</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="teach-tab-content" id="assignments-tab">
+                    <div class="tab-header">
+                        <h2>Проверка работ</h2>
+                        <p>Оценивание практических заданий слушателей</p>
+                    </div>
+
+                    <div class="filters-section">
+                        <div class="filter-group">
+                            <label>Статус:</label>
+                            <select class="filter-select" id="status-filter">
+                                <option value="all">Все</option>
+                                <option value="на проверке">На проверке</option>
+                                <option value="завершен">Проверенные</option>
+                                <option value="на доработке">На доработке</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Задание:</label>
+                            <select class="filter-select" id="assignment-filter">
+                                <option value="all">Все задания</option>
+                                {% for assignment in assignments %}
+                                <option value="{{ assignment.id }}">{{ assignment.practical_assignment_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="assignments-list">
+                        {% for submission in submissions %}
+                        <div class="assignment-submission-card" 
+                             data-status="{{ submission.submission_status.assignment_status_name }}" 
+                             data-assignment="{{ submission.practical_assignment.id }}">
+                            <div class="submission-header">
+                                <div class="student-info">
+                                    <h4>{{ submission.user.last_name }} {{ submission.user.first_name }}</h4>
+                                    <span class="student-email">{{ submission.user.email }}</span>
+                                </div>
+                                <div class="submission-meta">
+                                    <span class="assignment-name">{{ submission.practical_assignment.practical_assignment_name }}</span>
+                                    <span class="submission-date">
+                                        {% if submission.submission_date %}
+                                        Сдано: {{ submission.submission_date|date:"d.m.Y H:i" }}
+                                        {% else %}
+                                        Не сдано
+                                        {% endif %}
+                                    </span>
+                                    <span class="attempt-number">Попытка: {{ submission.attempt_number }}</span>
+                                </div>
+                                <div class="submission-status">
+                                    <span class="status-badge status-{{ submission.submission_status.assignment_status_name|slugify }}">
+                                        {{ submission.submission_status.assignment_status_name }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {% if submission.files.all %}
+                            <div class="submission-files">
+                                <strong>Прикрепленные файлы:</strong>
+                                <div class="files-list">
+                                    {% for file in submission.files.all %}
+                                    <a href="{{ file.file.url }}" class="file-link" target="_blank" download>
+                                        <i class="fas fa-file"></i>
+                                        {{ file.file_name }} ({{ file.file_size|filesizeformat }})
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if submission.comment %}
+                            <div class="submission-comment">
+                                <strong>Комментарий слушателя:</strong>
+                                <p>{{ submission.comment }}</p>
+                            </div>
+                            {% endif %}
+
+                            {% if submission.feedback %}
+                            <div class="existing-feedback">
+                                <div class="feedback-header">
+                                    <strong>Ваша оценка:</strong>
+                                    {% if submission.practical_assignment.grading_type == 'points' %}
+                                    <span class="grade-badge">
+                                        {{ submission.feedback.score }}/{{ submission.practical_assignment.max_score }} баллов
+                                    </span>
+                                    {% else %}
+                                    <span class="grade-badge {% if submission.feedback.is_passed %}grade-passed{% else %}grade-failed{% endif %}">
+                                        {{ submission.feedback.is_passed|yesno:"Зачёт,Незачёт" }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% if submission.feedback.comment_feedback %}
+                                <div class="feedback-comment">
+                                    <strong>Комментарий:</strong>
+                                    <p>{{ submission.feedback.comment_feedback }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <div class="submission-actions">
+                                <a href="{% url 'grade_assignment' submission.id %}" class="teach-btn teach-btn-primary">
+                                    {% if submission.feedback %}Изменить оценку{% else %}Оценить{% endif %}
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle empty-icon"></i>
+                            <h3>Нет работ для проверки</h3>
+                            <p>Все работы проверены или слушатели еще не сдали задания</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="teach-tab-content" id="students-tab">
+                    <div class="tab-header">
+                        <h2>Слушатели курса</h2>
+                        <p>Управление и мониторинг прогресса слушателей</p>
+                    </div>
+
+                    <div class="students-grid">
+                        {% for student in students_details %}
+                        <div class="student-card">
+                            <div class="student-header">
+                                <div class="student-avatar">
+                                    {{ student.user__last_name|first|upper }}{{ student.user__first_name|first|upper }}
+                                </div>
+                                <div class="student-info">
+                                    <h4>{{ student.user__last_name }} {{ student.user__first_name }}</h4>
+                                </div>
+                            </div>
+
+                            <div class="student-progress">
+                                <div class="progress-info">
+                                    <span>Прогресс:</span>
+                                    <span class="progress-value">{{ student.progress|floatformat:0 }}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ student.progress|floatformat:0 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="student-stats">
+                                <div class="stat">
+                                    <span class="stat-value">{{ student.completed_assignments }}</span>
+                                    <span class="stat-label">Выполнено работ</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">{{ student.average_score|floatformat:1 }}</span>
+                                    <span class="stat-label">Средний балл</span>
+                                </div>
+                            </div>
+
+                            <div class="student-actions">
+                                <a href="{% url 'student_progress' course.id student.user_id %}" class="teach-btn teach-btn-outline">
+                                    Детали
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const navItems = document.querySelectorAll('.teach-nav-item');
+    const tabContents = document.querySelectorAll('.teach-tab-content');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            switchToTab(tabName);
+        });
+    });
+
+    const statusFilter = document.getElementById('status-filter');
+    const assignmentFilter = document.getElementById('assignment-filter');
+    const submissionCards = document.querySelectorAll('.assignment-submission-card');
+
+    function filterSubmissions() {
+        const statusValue = statusFilter.value;
+        const assignmentValue = assignmentFilter.value;
+
+        submissionCards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const cardAssignment = card.getAttribute('data-assignment');
+            
+            const statusMatch = statusValue === 'all' || statusValue === cardStatus;
+            const assignmentMatch = assignmentValue === 'all' || assignmentValue === cardAssignment;
+            
+            if (statusMatch && assignmentMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    if (statusFilter && assignmentFilter) {
+        statusFilter.addEventListener('change', filterSubmissions);
+        assignmentFilter.addEventListener('change', filterSubmissions);
+    }
+});
+
+function switchToTab(tabName) {
+    const navItems = document.querySelectorAll('.teach-nav-item');
+    const tabContents = document.querySelectorAll('.teach-tab-content');
+    
+    navItems.forEach(nav => nav.classList.remove('active'));
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+}
+
+function previewSubmission(submissionId) {
+    window.open(`/media/assignment_submissions/${submissionId}/`, '_blank');
+}
+</script>
+
+
+<style>
+.course-teach-section {
+    padding: 0;
+    min-height: 100vh;
+}
+
+.course-teach-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.course-teach-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.course-teach-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+}
+
+.course-teach-breadcrumb a {
+    color: #BFC3F7;
+    text-decoration: none;
+}
+
+.course-teach-title-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+}
+
+.course-teach-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: clamp(2em, 5vw, 3em);
+    color: #FFFFFF;
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+}
+
+.course-teach-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.teach-stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #FFFFFF;
+}
+
+.stat-label {
+    display: block;
+    color: #BFC3F7;
+    font-size: 0.9em;
+}
+
+.course-teach-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.course-teach-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: sticky;
+    top: 20px;
+}
+
+.teach-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.teach-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1em;
+    position: relative;
+}
+
+.teach-nav-item.active,
+.teach-nav-item:hover {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+}
+
+.nav-badge {
+    background: #ff4757;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.8em;
+    margin-left: auto;
+}
+
+.quick-actions-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.quick-actions-title {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.quick-actions-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-action-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 10px;
+    color: #BFC3F7;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+    border: 1px solid transparent;
+    font-size: 0.9em;
+}
+
+.quick-action-link:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+    border-color: rgba(123, 127, 213, 0.4);
+}
+
+.course-teach-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 20px;
+}
+
+.teach-tab-content {
+    display: none;
+}
+
+.teach-tab-content.active {
+    display: block;
+}
+
+.tab-header {
+    margin-bottom: 25px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.tab-header h2 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    font-size: 1.8em;
+    margin: 0 0 8px 0;
+}
+
+.tab-header p {
+    color: #BFC3F7;
+    margin: 0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1em;
+}
+
+.overview-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.overview-stat-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-primary { border-left: 4px solid #667eea; }
+.stat-success { border-left: 4px solid #4CAF50; }
+.stat-warning { border-left: 4px solid #FFC107; }
+.stat-info { border-left: 4px solid #17a2b8; }
+
+.stat-icon {
+    font-size: 2em;
+    opacity: 0.8;
+}
+
+.stat-content .stat-value {
+    font-family: "Arial Black", sans-serif;
+    font-size: 2em;
+    color: #FFFFFF;
+    margin: 0;
+}
+
+.stat-content .stat-label {
+    color: #BFC3F7;
+    font-size: 0.9em;
+}
+
+.overview-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    margin-bottom: 20px;
+}
+
+.overview-section h3 {
+    font-family: "Arial Black", sans-serif;
+    color: #FFFFFF;
+    margin: 0 0 20px 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-all-link {
+    color: #7B7FD5;
+    text-decoration: none;
+    font-family: "Arial Black", sans-serif;
+}
+
+.student-progress-item {
+    margin-bottom: 15px;
+}
+
+.student-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.student-name {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+}
+
+.student-progress {
+    color: #BFC3F7;
+    font-family: "Arial Black", sans-serif;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(191, 195, 247, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #A020F0, #7B7FD5);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.filters-section {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group label {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    white-space: nowrap;
+}
+
+.filter-select {
+    background: rgba(191, 195, 247, 0.1);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+}
+
+.assignments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.assignment-submission-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.submission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.student-info h4 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 5px 0;
+}
+
+.student-email {
+    color: #BFC3F7;
+    font-size: 0.9em;
+}
+
+.submission-meta {
+    flex: 1;
+}
+
+.assignment-name {
+    display: block;
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 5px;
+}
+
+.submission-date,
+.attempt-number {
+    color: #BFC3F7;
+    font-size: 0.9em;
+    margin-right: 15px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.status-submitted { background: rgba(255, 193, 7, 0.2); color: #FFC107; border: 1px solid rgba(255, 193, 7, 0.4); }
+.status-graded { background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.4); }
+.status-returned { background: rgba(255, 87, 34, 0.2); color: #FF5722; border: 1px solid rgba(255, 87, 34, 0.4); }
+
+.submission-files,
+.submission-comment,
+.existing-feedback {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #7B7FD5;
+}
+
+.files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.file-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #BFC3F7;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(123, 127, 213, 0.1);
+}
+
+.file-link:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.grade-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    font-size: 0.9em;
+}
+
+.grade-passed { background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.4); }
+.grade-failed { background: rgba(244, 67, 54, 0.2); color: #F44336; border: 1px solid rgba(244, 67, 54, 0.4); }
+
+.submission-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.teach-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: "Arial Black", sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.teach-btn-primary {
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    color: white;
+    border: 1px solid rgba(160, 32, 240, 0.3);
+}
+
+.teach-btn-outline {
+    background: rgba(191, 195, 247, 0.1);
+    color: #BFC3F7;
+    border: 1px solid rgba(123, 127, 213, 0.4);
+}
+
+.teach-btn:hover {
+    transform: translateY(-1px);
+}
+
+.students-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.student-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.student-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.student-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #A020F0, #7B7FD5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.2em;
+}
+
+.student-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat .stat-value {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.stat .stat-label {
+    font-size: 0.8em;
+}
+
+.materials-actions {
+    margin-bottom: 20px;
+}
+
+.materials-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.material-card {
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+}
+
+.material-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.material-header h3 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0;
+    flex: 1;
+}
+
+.material-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    background: rgba(191, 195, 247, 0.1);
+    border: 1px solid rgba(123, 127, 213, 0.4);
+    border-radius: 6px;
+    padding: 8px;
+    color: #BFC3F7;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.icon-btn:hover {
+    background: rgba(123, 127, 213, 0.2);
+    color: #FFFFFF;
+}
+
+.material-assignments {
+    margin-top: 15px;
+}
+
+.material-assignments h4 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin-bottom: 10px;
+}
+
+.assignment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: rgba(191, 195, 247, 0.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.assignment-name {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+}
+
+.assignment-stats {
+    color: #BFC3F7;
+    font-size: 0.9em;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(21, 29, 73, 0.9);
+    border-radius: 15px;
+    border: 1px solid rgba(123, 127, 213, 0.3);
+    color: #BFC3F7;
+    
+}
+
+.empty-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-state h3 {
+    color: #FFFFFF;
+    font-family: "Arial Black", sans-serif;
+    margin: 0 0 12px 0;
+    font-size: 1.5em;
+}
+
+.empty-state p {
+    margin: 0;
+    font-family: "Arial Black", sans-serif;
+    font-size: 1.1em;
+}
+
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #2d3748;
+    margin: 10% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #fff;
+}
+
+.close {
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #ffc107;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: right;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    color: #fff;
+    margin-bottom: 5px;
+    font-family: "Arial Black", sans-serif;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-family: "Arial Black", sans-serif;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #7B7FD5;
+}
+
+@media (max-width: 1024px) {
+    .course-teach-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .course-teach-sidebar {
+        position: static;
+    }
+    
+    .teach-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 15px;
+    }
+    
+    .teach-nav-item {
+        white-space: nowrap;
+        flex: 1;
+        min-width: 140px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .course-teach-title-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .course-teach-stats {
+        justify-content: center;
+    }
+    
+    .submission-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .students-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .course-teach-breadcrumb,
+    .course-teach-title-section,
+    .course-teach-content {
+        padding: 0 15px;
+    }
+    
+    .course-teach-header {
+        padding: 20px 0;
+    }
+    
+    .teach-nav {
+        flex-direction: column;
+    }
+    
+    .assignment-submission-card,
+    .student-card,
+    .material-card {
+        padding: 20px;
+    }
+    
+    .tab-header {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}

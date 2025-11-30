@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}
+Авторизация - UNIREAX
+{% endblock %}
+
+{% block link_style %}
+{{ block.super }} 
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="background-elements">
+    </div>
+    <div class="container-fluid">
+        <div class="row justify-content-center min-vh-100">
+            <div class="col-12 col-md-8 col-lg-6 auth-column">
+                <div class="auth-container">
+                    <h1 class="auth-title">Авторизация</h1>
+                    <p class="auth-subtitle">Заполните поля авторизации, чтобы вернуться к UNIREAX!</p>
+                    {% if messages %}
+                        <div class="auth-error">
+                            {% for message in messages %}
+                                <p>{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                   <form method="post" class="auth-form">
+                        {% csrf_token %}
+                        <div class="auth-field mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="Email" required>
+                        </div>
+                        <div class="auth-field mb-3">
+                            <input type="password" name="password" class="form-control" placeholder="Пароль" required>
+                        </div>
+                        <button type="submit" class="auth-button btn">Войти</button>
+                    </form>
+                  <div class="auth-links mt-3 d-flex flex-column align-items-center">
+                    <a href="{% url 'registration_listener' %}" class="mb-2">Ещё нет аккаунта?</a>
+                    <a href="{% url 'password_reset' %}" class="mb-2">Забыли пароль?</a>
+                    <a href="{% url 'register_teacher_methodist' %}" class="mb-2">Я хочу стать методистом или преподавателем</a>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}  
+<script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/fix-scroll.js' %}" defer></script>
+{% endblock %}

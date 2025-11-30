@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Админ-панель{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="admin-panel">
+        <div class="admin-container">
+            <h1>Админ-панель</h1>
+            <p>Управление системой</p>
+
+            <div class="admin-buttons">
+                <a href="{% url 'user_list' %}" class="admin-button">
+                    <i class="fas fa-users"></i> Пользователи
+                </a>
+                <a href="{% url 'course_list' %}" class="admin-button">
+                    <i class="fas fa-book"></i> Курсы
+                </a>
+                <a href="{% url 'role_list' %}" class="admin-button">
+                    <i class="fas fa-user-tag"></i> Роли
+                </a>
+                <a href="{% url 'logs_page' %}" class="admin-button">
+                    <i class="fas fa-history"></i> Логи
+                </a>
+                <a href="{% url 'backup_database' %}" class="admin-button">
+                    <i class="fas fa-database"></i> Бэкап / Восстановление
+                </a>
+                <a href="/admin" class="admin-button">
+                    <i class="fas fa-table"></i> База данных
+                </a>
+                <a href="{% url 'user_course_list' %}" class="admin-button">
+                    <i class="fas fa-graduation-cap"></i> Слушатели и курсы
+                </a>
+                <a href="{% url 'course_teacher_list' %}" class="admin-button">
+                    <i class="fas fa-chalkboard-teacher"></i> Персонал и курсы
+                </a>
+                <a href="{% url 'admin_user_verification_list' %}" class="admin-button">
+                    <i class="fas fa-hourglass-start"></i> Запросы на регистрацию
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

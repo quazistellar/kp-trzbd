@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}UNIREAX - Избранные курсы{% endblock %}
+
+{% block content %}
+    <section class="catalog-section">
+        <h1>Избранные курсы</h1>
+        <p>Курсы, которые вы сохранили для себя</p>
+        {% if favorites_count > 0 %}
+            <div class="favorites-count-badge" id="favoritesCountBadge">
+                Число сохраненных курсов: {{ favorites_count }} 
+            </div>
+        {% endif %}
+        <div class="background-elements">
+        </div>
+    </section>
+
+    <section class="courses-section">
+        <div class="courses-grid" id="coursesGrid">
+            {% if favorite_courses %}
+                {% for course in favorite_courses %}
+                    <div class="course-card">
+                        <div class="course-card-image-container">
+                            {% if course.course_photo_path %}
+                                <img src="{{ course.course_photo_path.url }}" alt="{{ course.course_name }}" class="course-image">
+                            {% else %}
+                                <img src="{% static 'images/course-placeholder.jpg' %}" alt="{{ course.course_name }}" class="course-image">
+                            {% endif %}
+                            <div class="course-overlay">
+                                <div class="course-card-header">
+                                    <h3 class="course-name">{{ course.course_name }}</h3>
+                                    <button class="btn-favorite active" 
+                                            data-course-id="{{ course.id }}"
+                                            onclick="removeFromFavorites(this)"
+                                            aria-label="Удалить из избранного">
+                                        <img src="{% static 'icons/icon-heart.png' %}" alt="Удалить из избранного">
+                                    </button>
+                                </div>
+                                <div class="course-description-container">
+                                    <p class="course-description" data-fulltext="{{ course.course_description|default:'' }}">
+                                        {{ course.course_description|default:'Описание отсутствует'|truncatechars:150 }}
+                                    </p>
+                                </div>
+                                <div class="course-details">
+                                    {% if course.course_price and course.course_price > 0 %}
+                                        <p class="price">{{ course.course_price }} ₽</p>
+                                    {% else %}
+                                        <p class="price">Бесплатный</p>
+                                    {% endif %}
+                                    <a href="{% url 'course_enroll_detail' course.id %}" class="btn-details">Подробнее</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card-footer">
+                            <div class="rating">
+                                <span>{{ course.db_rating|floatformat:1 }} <img src="{% static 'icons/star.png' %}" alt="Рейтинг"></span>
+                                <span>
+                                    {% if course.course_max_places > 0 %}
+                                        {{ course.course_max_places }}
+                                    {% else %}
+                                        ∞
+                                    {% endif %}
+                                    <img src="{% static 'icons/listeners.png' %}" alt="Места">
+                                </span>
+                                <span>{{ course.course_hours }} <img src="{% static 'icons/clock.png' %}" alt="Часы"></span>
+                                {% if course.has_certificate %}
+                                    <span>Сертификат <img src="{% static 'icons/cert.png' %}" alt="Сертификат"></span>
+                                {% endif %}
+                            </div>
+                            <p class="course-category">{{ course.course_category.course_category_name }}, {{ course.course_type.course_type_name }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state-container">
+                    <div class="empty-state">
+                        <img src="{% static 'icons/unireax_logo.PNG' %}" alt="Пусто" class="empty-icon">
+                        <h2 class="empty-title">В избранном пока пусто</h2>
+                        <p class="empty-description">Сохраняйте понравившиеся курсы, чтобы не потерять их</p>
+                        <a href="{% url 'catalog' %}" class="btn-dream empty-btn">Перейти в каталог курсов</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        async function removeFromFavorites(button) {
+            const courseId = button.dataset.courseId;
+            const courseCard = button.closest('.course-card');
+            
+            const data = await window.toggleFavorite(courseId);
+            
+            if (data && !data.is_favorite) {
+                button.classList.remove('active');
+                const img = button.querySelector('img');
+                if (img) {
+                    img.style.filter = 'none';
+                }
+                
+                button.style.transform = 'scale(0.8)';
+                courseCard.style.opacity = '0.7';
+                
+                setTimeout(() => {
+                    courseCard.style.opacity = '0';
+                    courseCard.style.transform = 'scale(0.9) translateY(20px)';
+                    
+                    setTimeout(() => {
+                        courseCard.remove();
+                        
+                        updateFavoritesCount(data.favorites_count);
+                        checkIfEmpty();
+                    }, 300);
+                }, 200);
+            }
+        }
+
+        function updateFavoritesCount(count) {
+            const countElement = document.getElementById('favoritesCountBadge');
+            if (countElement) {
+                if (count > 0) {
+                    countElement.textContent = 'Список избранного очищается при каждом выходе из аккаунта. Текущее число сохраненных курсов: ' + count;
+                    countElement.style.display = 'inline-block';
+                } else {
+                    countElement.style.display = 'none';
+                }
+            }
+        }
+
+        function checkIfEmpty() {
+            const grid = document.getElementById('coursesGrid');
+            const courseCards = grid.querySelectorAll('.course-card:not(.empty-state-container)');            
+            if (courseCards.length === 0) {
+                showEmptyState();
+            }
+        }
+
+        function showEmptyState() {
+            const grid = document.getElementById('coursesGrid');
+            const emptyHTML = `
+                <div class="empty-state-container">
+                    <div class="empty-state">
+                        <img src="{% static 'icons/unireax_logo.PNG' %}" alt="Пусто" class="empty-icon">
+                        <h2 class="empty-title">В избранном пока пусто</h2>
+                        <p class="empty-description">Сохраняйте понравившиеся курсы, чтобы не потерять их</p>
+                        <p class="empty-description">Список избранного очищается при каждом выходе из аккаунта</p>
+                        <a href="{% url 'catalog' %}" class="btn-dream empty-btn">Перейти в каталог курсов</a>
+                    </div>
+                </div>
+            `;
+            grid.innerHTML = emptyHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-favorite').forEach(btn => {
+                const img = btn.querySelector('img');
+                if (img && btn.classList.contains('active')) {
+                    img.style.filter = 'brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(320deg)';
+                }
+            });
+            
+            const initialCount = {{ favorites_count|default:0 }};
+            updateFavoritesCount(initialCount);
+        });
+    </script>
+    <script src="{% static 'js/truncate-description.js' %}" defer></script>
+    <script src="{% static 'js/fix-scroll.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title_name %}Пользователь: {{ user_obj.last_name }} {{ user_obj.first_name }}{% endblock %}
+
+{% block link_style %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section class="users-panel">
+    <div class="users-container">
+        <h1 class="users-title">Подробная информация о пользователе</h1>
+        
+        <div class="user-detail-card">
+            <div class="user-detail-grid">
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Основная информация</h3>
+                    <p><strong>ID:</strong> {{ user_obj.id }}</p>
+                    <p><strong>Фамилия:</strong> {{ user_obj.last_name }}</p>
+                    <p><strong>Имя:</strong> {{ user_obj.first_name }}</p>
+                    <p><strong>Отчество:</strong> {{ user_obj.patronymic|default:"Не указано" }}</p>
+                    <p><strong>Почта:</strong> {{ user_obj.email }}</p>
+                    <p><strong>Имя пользователя:</strong> {{ user_obj.username }}</p>
+                    
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Роль и статус</h3>
+                    <p><strong>Роль:</strong> {{ user_obj.role.role_name }}</p>
+                    <p><strong>Статус подтверждения:</strong> 
+                        {% if user_obj.is_verified %}
+                            <span class="user-status-verified">Подтверждён</span>
+                        {% else %}
+                            <span class="user-status-pending">Не подтверждён</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Активен:</strong> 
+                        {% if user_obj.is_active %}
+                            <span class="user-status-active">Да</span>
+                        {% else %}
+                            <span class="user-status-inactive">Нет</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Суперпользователь:</strong> 
+                        {% if user_obj.is_superuser %}
+                            <span class="user-status-active">Да</span>
+                        {% else %}
+                            <span class="user-status-pending">Нет</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Профессиональная информация</h3>
+                    <p><strong>Должность:</strong> {{ user_obj.position|default:"Не указана" }}</p>
+                    <p><strong>Учебное заведение:</strong> {{ user_obj.educational_institution|default:"Не указано" }}</p>
+                    <p><strong>Тема приложения:</strong> {{ user_obj.profile_theme|default:"По умолчанию" }}</p>
+                    {% if user_obj.certificat_from_the_place_of_work_path %}
+                    <div class="file-field">
+                        <label>Справка с места работы/документ об образовании:</label>
+                        <a href="{{ user_obj.certificat_from_the_place_of_work_path.url }}" target="_blank" class="file-link">
+                            Открыть файл со справкой
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="user-detail-section">
+                    <h3 class="user-detail-section-title">Даты</h3>
+                    <p><strong>Последний вход:</strong> {{ user_obj.last_login|date:'d.m.Y H:i'|default:"Никогда" }}</p>
+                    <p><strong>Дата регистрации:</strong> {{ user_obj.date_joined|date:'d.m.Y H:i' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-detail-actions">
+            <a href="{% url 'create_update_user' user_obj.id %}" class="user-action-edit">Редактировать пользователя</a>
+            <a href="{% url 'delete_user' user_obj.id %}" class="user-action-delete">Удалить пользователя</a>
+            <a href="{% url 'user_list' %}" class="user-action-back">Назад к списку</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
